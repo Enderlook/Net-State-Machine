@@ -80,7 +80,7 @@ namespace Enderlook.StateMachine
             hasGoto = 2;
         }
 
-        protected abstract bool HasSubTransitions();
+        private protected abstract bool HasSubTransitions();
 
         /// <summary>
         /// Determines an action that is executed when the event is raised.
@@ -99,7 +99,7 @@ namespace Enderlook.StateMachine
             this.action = action;
         }
 
-        protected int GetGoto(Dictionary<TState, int> statesMap)
+        private protected int GetGoto(Dictionary<TState, int> statesMap)
         {
             if (hasGoto == 0)
                 throw new InvalidOperationException("Transition must have registered a goto.");

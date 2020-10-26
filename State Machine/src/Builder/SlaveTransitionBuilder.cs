@@ -74,7 +74,7 @@ namespace Enderlook.StateMachine
             return new Transition<TState, TEvent>(GetGoto(statesMap), action, range, guard);
         }
 
-        protected override bool HasSubTransitions() => slaves.Count > 0;
+        private protected override bool HasSubTransitions() => slaves.Count > 0;
 
         /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.GotoCore(TState)"/>
         public TParent Goto(TState state)
