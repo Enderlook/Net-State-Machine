@@ -183,3 +183,9 @@ For example:
 `If(Func<bool>)` also have `If(Func<Object, bool)`.
 
 `Start()` also have `Start(Object)`, where `Object` is used in `ExecuteOnEntry(Action<Object>)` of the initial state.
+
+# Changelog
+## 0.1.1
+- Fix `.GotoSelf()` requiring an state and producing `StackOverflowException`.
+- Fix documentation references.
+- Turn `HasSubTransitions` and `GetGoto` methods in `TransitionBuilder<TState, TEvent>` from `protected` to `private protected`.

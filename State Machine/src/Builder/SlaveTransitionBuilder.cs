@@ -57,21 +57,21 @@ namespace Enderlook.StateMachine
             return slave;
         }
 
-        internal override Transition<TState, TEvent> ToTransition(ListSlot<Transition<TState, TEvent>> transitions, Dictionary<TState, int> statesMap)
+        internal override Transition<TState, TEvent> ToTransition(ListSlot<Transition<TState, TEvent>> transitions, Dictionary<TState, int> statesMap, TState currentState)
         {
             if (slaves == null)
-                return new Transition<TState, TEvent>(GetGoto(statesMap), action, (0, 0), guard);
+                return new Transition<TState, TEvent>(GetGoto(statesMap, currentState), action, (0, 0), guard);
             (int from, int to) range = transitions.Reserve(slaves.Count);
 
             int i = range.from;
             foreach (SlaveTransitionBuilder<TState, TEvent, SlaveTransitionBuilder<TState, TEvent, TParent>> slave in slaves)
             {
-                transitions.Store(slave.ToTransition(transitions, statesMap), i);
+                transitions.Store(slave.ToTransition(transitions, statesMap, currentState), i);
                 i++;
             }
             Debug.Assert(i == range.to);
 
-            return new Transition<TState, TEvent>(GetGoto(statesMap), action, range, guard);
+            return new Transition<TState, TEvent>(GetGoto(statesMap, currentState), action, range, guard);
         }
 
         private protected override bool HasSubTransitions() => slaves.Count > 0;
@@ -83,10 +83,10 @@ namespace Enderlook.StateMachine
             return parent;
         }
 
-        public TParent GotoSelf(TState state)
         /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.GotoSelfCore()"/>
+        public TParent GotoSelf()
         {
-            GotoSelf(state);
+            GotoSelfCore();
             return parent;
         }
 

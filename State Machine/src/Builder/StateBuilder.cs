@@ -153,7 +153,7 @@ namespace Enderlook.StateMachine
                 if (kv.Value is null)
                     transitions.Store(new Transition<TState, TEvent>(-1, null, (0,0)), slot);
                 else
-                    transitions.Store(kv.Value.ToTransition(transitions, statesMap), slot);
+                    transitions.Store(kv.Value.ToTransition(transitions, statesMap, State), slot);
             }
 
             return new State<TState, TEvent>(state, onEntry, onExit, onUpdate, trans);

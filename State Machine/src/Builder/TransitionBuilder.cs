@@ -31,6 +31,10 @@ namespace Enderlook.StateMachine
         ///         <term><c>2</c></term>
         ///         <description>Maintain in the same state.</description>
         ///     </item>
+        ///     <item>
+        ///         <term><c>3</c></term>
+        ///         <description>Goto to the same state.</description>
+        ///     </item>
         /// </list>
         /// </summary>
         protected int hasGoto;
@@ -64,7 +68,7 @@ namespace Enderlook.StateMachine
                 throw new InvalidOperationException("Already has a registered goto.");
 
             @goto = SelfState;
-            hasGoto = 1;
+            hasGoto = 3;
         }
 
         /// <summary>
@@ -99,16 +103,18 @@ namespace Enderlook.StateMachine
             this.action = action;
         }
 
-        private protected int GetGoto(Dictionary<TState, int> statesMap)
+        private protected int GetGoto(Dictionary<TState, int> statesMap, TState currentState)
         {
             if (hasGoto == 0)
                 throw new InvalidOperationException("Transition must have registered a goto.");
             if (hasGoto == 2)
                 return -1;
+            if (hasGoto == 3)
+                @goto = currentState;
 
             return StateMachineBuilder<TState, TEvent>.TryGetStateIndex(@goto, statesMap);
         }
 
-        internal abstract Transition<TState, TEvent> ToTransition(ListSlot<Transition<TState, TEvent>> transitions, Dictionary<TState, int> statesMap);
+        internal abstract Transition<TState, TEvent> ToTransition(ListSlot<Transition<TState, TEvent>> transitions, Dictionary<TState, int> statesMap, TState currentState);
     }
 }
