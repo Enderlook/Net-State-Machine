@@ -83,28 +83,28 @@ namespace Enderlook.StateMachine
             return parent;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.GotoSelfCore(TState)"/>
         public TParent GotoSelf(TState state)
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.GotoSelfCore()"/>
         {
             GotoSelf(state);
             return parent;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.StaySelfCore(TState)"/>
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.StaySelfCore()"/>
         public TParent StaySelf()
         {
             StaySelfCore();
             return parent;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.ExecuteCore(Action{object})"/>
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.ExecuteCore(Delegate)"/>
         public SlaveTransitionBuilder<TState, TEvent, TParent> Execute(Action<object> action)
         {
             ExecuteCore(action);
             return this;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.ExecuteCore(Action)"/>
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.ExecuteCore(Delegate)"/>
         public SlaveTransitionBuilder<TState, TEvent, TParent> Execute(Action action)
         {
             ExecuteCore(action);
