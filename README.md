@@ -189,3 +189,6 @@ For example:
 - Fix `.GotoSelf()` requiring an state and producing `StackOverflowException`.
 - Fix documentation references.
 - Turn `HasSubTransitions` and `GetGoto` methods in `TransitionBuilder<TState, TEvent>` from `protected` to `private protected`.
+
+## 0.2.0
+- Fix documentation references.

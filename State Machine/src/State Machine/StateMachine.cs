@@ -21,7 +21,7 @@ namespace Enderlook.StateMachine
         /// <summary>
         /// Returns the current state of this state machine.
         /// </summary>
-        /// <exception cref="InvalidOperationException">Thrown when <see cref="Start"/> nor <see cref="Start(object)"/> has been called yet.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when <see cref="Start()"/> nor <see cref="Start(object)"/> has been called yet.</exception>
         public TState State => currentState < 0 ? throw new InvalidOperationException("State machine is already started.") : states[currentState].state;
 
         /// <summary>
