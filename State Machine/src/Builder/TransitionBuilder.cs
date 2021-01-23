@@ -112,7 +112,7 @@ namespace Enderlook.StateMachine
             if (hasGoto == 3)
                 @goto = currentState;
 
-            return StateMachineBuilder<TState, TEvent>.TryGetStateIndex(@goto, statesMap);
+            return @goto.TryGetStateIndex(statesMap);
         }
 
         internal abstract Transition<TState, TEvent> ToTransition(ListSlot<Transition<TState, TEvent>> transitions, Dictionary<TState, int> statesMap, TState currentState);

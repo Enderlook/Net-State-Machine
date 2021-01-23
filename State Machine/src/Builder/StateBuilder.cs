@@ -8,7 +8,8 @@ namespace Enderlook.StateMachine
     /// </summary>
     /// <typeparam name="TState">Type that determines states.</typeparam>
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
-    public class StateBuilder<TState, TEvent>
+    /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
+    public class StateBuilder<TState, TEvent, TParameter>
         where TState : IComparable
         where TEvent : IComparable
     {
@@ -18,19 +19,19 @@ namespace Enderlook.StateMachine
         internal TState State { get; }
 
         private Dictionary<TEvent, TransitionBuilder<TState, TEvent>> transitions = new Dictionary<TEvent, TransitionBuilder<TState, TEvent>>();
-        private StateMachineBuilder<TState, TEvent> parent;
+        private StateMachineBuilder<TState, TEvent, TParameter> parent;
 
-        internal StateBuilder(StateMachineBuilder<TState, TEvent> parent, TState state)
+        internal StateBuilder(StateMachineBuilder<TState, TEvent, TParameter> parent, TState state)
         {
             this.parent = parent;
             State = state;
         }
 
-        /// <inheritdoc cref="StateMachineBuilder{TState, TEvent}.In(TState)"/>
-        public StateBuilder<TState, TEvent> In(TState state) => parent.In(state);
+        /// <inheritdoc cref="StateMachineBuilder{TState, TEvent, TParameter}.In(TState)"/>
+        public StateBuilder<TState, TEvent, TParameter> In(TState state) => parent.In(state);
 
-        /// <inheritdoc cref="StateMachineBuilder{TState, TEvent}.Build"/>
-        public StateMachine<TState, TEvent> Build() => parent.Build();
+        /// <inheritdoc cref="StateMachineBuilder{TState, TEvent, TParameter}.Build"/>
+        public StateMachine<TState, TEvent, TParameter> Build() => parent.Build();
 
         /// <summary>
         /// Determines an action to execute on entry to this state.
@@ -39,7 +40,7 @@ namespace Enderlook.StateMachine
         /// <returns><see cref="this"/>.</returns>
         /// <exception cref="InvalidOperationException">Thrown when this state already has a registered entry action.</exception>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-        private StateBuilder<TState, TEvent> ExecuteOnEntry(Delegate action)
+        private StateBuilder<TState, TEvent, TParameter> ExecuteOnEntry(Delegate action)
         {
             if (!(onEntry is null))
                 throw new InvalidOperationException("Already has a registered entry action");
@@ -51,11 +52,11 @@ namespace Enderlook.StateMachine
         }
 
         /// <inheritdoc cref="ExecuteOnEntry(Delegate)"/>
-        public StateBuilder<TState, TEvent> ExecuteOnEntry(Action action)
+        public StateBuilder<TState, TEvent, TParameter> ExecuteOnEntry(Action action)
             => ExecuteOnEntry((Delegate)action);
 
         /// <inheritdoc cref="ExecuteOnEntry(Delegate)"/>
-        public StateBuilder<TState, TEvent> ExecuteOnEntry(Action<object> action)
+        public StateBuilder<TState, TEvent, TParameter> ExecuteOnEntry(Action<TParameter> action)
             => ExecuteOnEntry((Delegate)action);
 
         /// <summary>
@@ -65,7 +66,7 @@ namespace Enderlook.StateMachine
         /// <returns><see cref="this"/>.</returns>
         /// <exception cref="InvalidOperationException">Thrown when this state already has a registered exit action.</exception>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-        private StateBuilder<TState, TEvent> ExecuteOnExit(Delegate action)
+        private StateBuilder<TState, TEvent, TParameter> ExecuteOnExit(Delegate action)
         {
             if (!(onExit is null))
                 throw new InvalidOperationException("Already has a registered exit action");
@@ -77,11 +78,11 @@ namespace Enderlook.StateMachine
         }
 
         /// <inheritdoc cref="ExecuteOnExit(Delegate)"/>
-        public StateBuilder<TState, TEvent> ExecuteOnExit(Action action)
+        public StateBuilder<TState, TEvent, TParameter> ExecuteOnExit(Action action)
             => ExecuteOnExit((Delegate)action);
 
         /// <inheritdoc cref="ExecuteOnExit(Delegate)"/>
-        public StateBuilder<TState, TEvent> ExecuteOnExit(Action<object> action)
+        public StateBuilder<TState, TEvent, TParameter> ExecuteOnExit(Action<TParameter> action)
             => ExecuteOnExit((Delegate)action);
 
         /// <summary>
@@ -91,7 +92,7 @@ namespace Enderlook.StateMachine
         /// <returns><see cref="this"/>.</returns>
         /// <exception cref="InvalidOperationException">Thrown when this state already has a registered update action.</exception>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-        private StateBuilder<TState, TEvent> ExecuteOnUpdate(Delegate action)
+        private StateBuilder<TState, TEvent, TParameter> ExecuteOnUpdate(Delegate action)
         {
             if (!(onUpdate is null))
                 throw new InvalidOperationException("Already has a registered entry action");
@@ -103,11 +104,11 @@ namespace Enderlook.StateMachine
         }
 
         /// <inheritdoc cref="ExecuteOnUpdate(Delegate)"/>
-        public StateBuilder<TState, TEvent> ExecuteOnUpdate(Action action)
+        public StateBuilder<TState, TEvent, TParameter> ExecuteOnUpdate(Action action)
             => ExecuteOnUpdate((Delegate)action);
 
         /// <inheritdoc cref="ExecuteOnUpdate(Delegate)"/>
-        public StateBuilder<TState, TEvent> ExecuteOnUpdate(Action<object> action)
+        public StateBuilder<TState, TEvent, TParameter> ExecuteOnUpdate(Action<TParameter> action)
             => ExecuteOnUpdate((Delegate)action);
 
         /// <summary>
@@ -116,12 +117,12 @@ namespace Enderlook.StateMachine
         /// <param name="event">Raised event.</param>
         /// <returns>Transition builder.</returns>
         /// <exception cref="ArgumentException">Thrown when this state already has registered <paramref name="event"/>.</exception>
-        public MasterTransitionBuilder<TState, TEvent> On(TEvent @event)
+        public MasterTransitionBuilder<TState, TEvent, TParameter> On(TEvent @event)
         {
             if (transitions.ContainsKey(@event))
                 throw new ArgumentException($"The event {transitions} was already registered for this state.");
 
-            MasterTransitionBuilder<TState, TEvent> builder = new MasterTransitionBuilder<TState, TEvent>(this);
+            MasterTransitionBuilder<TState, TEvent, TParameter> builder = new MasterTransitionBuilder<TState, TEvent, TParameter>(this);
             transitions.Add(@event, builder);
             return builder;
         }
@@ -132,7 +133,7 @@ namespace Enderlook.StateMachine
         /// <param name="event">Event to ignore.</param>
         /// <returns><see cref="this"/>.</returns>
         /// <exception cref="ArgumentException">Thrown when this state already has registered <paramref name="event"/>.</exception>
-        public StateBuilder<TState, TEvent> Ignore(TEvent @event)
+        public StateBuilder<TState, TEvent, TParameter> Ignore(TEvent @event)
         {
             if (transitions.ContainsKey(@event))
                 throw new ArgumentException($"The event {transitions} was already registered for this state.");

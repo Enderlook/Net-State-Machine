@@ -10,7 +10,7 @@ The following example show all the functions of the state machine (except overlo
 public class Character
 {
 	private Random rnd = new Random();
-	private StateMachine<States, Events> stateMachine;
+	private StateMachine<States, Events, object> stateMachine;
 	private int health = 100;
 	private int food = 100;
 
@@ -46,7 +46,7 @@ public class Character
 
 	public Character()
 	{
-		stateMachine = StateMachine<States, Events>.Builder()
+		stateMachine = StateMachine<States, Events, object>.Builder()
 			.SetInitialState(States.Sleep)
 			.In(States.Sleep)
 				// Executed every time we enter to this state
@@ -171,18 +171,20 @@ public class Character
 
 The following methods have overloads:
 
-`Fire(TEvent)` and `Fire(TEvent, Object)`. The method accept an optional parameter `Object` which is send to every delegate. If `Object` is missing, `null` is used.
+`Fire(TEvent)` and `Fire(TEvent, TParameter)`. The method accept an optional parameter `TParameter` which is send to every delegate. If `TParameter` is missing, `default` is used.
 
-`ExecuteOnEntry(Action)`, `ExecuteOnExit(Action)`, `ExecuteOnUpdate(Action)` and `Execute(Action)` has an additional overload: `ExecuteOnEntry(Action<Object>)`, `ExecuteOnExit(Action<Object>)`, `ExecuteOnUpdate(Action<Object>)` and `Execute(Action<Object>)`, where `object` parameter is the value passed on `.Fire(TEvent, Object)`.
+`ExecuteOnEntry(Action)`, `ExecuteOnExit(Action)`, `ExecuteOnUpdate(Action)` and `Execute(Action)` has an additional overload: `ExecuteOnEntry(Action<TParameter>)`, `ExecuteOnExit(Action<TParameter>)`, `ExecuteOnUpdate(Action<TParameter>)` and `Execute(Action<TParameter>)`, where `TParameter` parameter is the value passed on `.Fire(TEvent, TParameter)`.
 
-The parameter `Object` is optional, and can be ignored.
+The parameter `TParameter` is optional, and can be ignored.
 For example: 
- - If you use `Fire(TEvent)` and `Execute(Action<Object>)`, `Object` is replaced by `null`.
- - If you use `Fire(TEvent, Object)` but `Execute(Action)`, `Object` is ignored.
+ - If you use `Fire(TEvent)` and `Execute(Action<TParameter>)`, `TParameter` is replaced by `default`.
+ - If you use `Fire(TEvent, TParameter)` but `Execute(Action)`, `TParameter` is ignored.
 
-`If(Func<bool>)` also have `If(Func<Object, bool)`.
+`If(Func<bool>)` also have `If(Func<TParameter, bool)`.
 
-`Start()` also have `Start(Object)`, where `Object` is used in `ExecuteOnEntry(Action<Object>)` of the initial state.
+`Start()` also have `Start(TParameter)`, where `TParameter` is used in `ExecuteOnEntry(Action<TParameter>)` of the initial state.
+
+We added the generic parameter `TParameter` instead of using a simple `Object` type so you can specify custom constraints on it. Also this allows you to remove boxing when passing structs.
 
 # Changelog
 
@@ -193,3 +195,4 @@ For example:
 
 ## 0.2.0
 - Fix documentation references.
+- Add `TParameter` on `StateMachine` and other classes to specify a common ground type for event parameters.

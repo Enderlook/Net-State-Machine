@@ -9,7 +9,8 @@ namespace Enderlook.StateMachine
     /// </summary>
     /// <typeparam name="TState">Type that determines states.</typeparam>
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
-    public class StateMachine<TState, TEvent>
+    /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
+    public class StateMachine<TState, TEvent, TParameter>
         where TState : IComparable
         where TEvent : IComparable
     {
@@ -21,15 +22,15 @@ namespace Enderlook.StateMachine
         /// <summary>
         /// Returns the current state of this state machine.
         /// </summary>
-        /// <exception cref="InvalidOperationException">Thrown when <see cref="Start()"/> nor <see cref="Start(object)"/> has been called yet.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when <see cref="Start()"/> nor <see cref="Start(TParameter)"/> has been called yet.</exception>
         public TState State => currentState < 0 ? throw new InvalidOperationException("State machine is already started.") : states[currentState].state;
 
         /// <summary>
         /// Creates the builder of an state machine.
         /// </summary>
         /// <returns>Builder of the state machine.</returns>
-        public static StateMachineBuilder<TState, TEvent> Builder()
-            => new StateMachineBuilder<TState, TEvent>();
+        public static StateMachineBuilder<TState, TEvent, TParameter> Builder()
+            => new StateMachineBuilder<TState, TEvent, TParameter>();
 
         internal StateMachine(int initialState, List<State<TState, TEvent>> states, List<Transition<TState, TEvent>> transitions)
         {
@@ -38,14 +39,14 @@ namespace Enderlook.StateMachine
             this.transitions = transitions;
         }
 
-        /// <inheritdoc cref="Start(object)"/>
-        public void Start() => Start(null);
+        /// <inheritdoc cref="Start(TParameter)"/>
+        public void Start() => Start(default);
 
         /// <summary>
         /// Initializes the state machine.
         /// </summary>
         /// <param name="parameter">Parameter passed to the OnEntry delegate in the initial state (if any).</param>
-        public void Start(object parameter)
+        public void Start(TParameter parameter)
         {
             if (currentState >= 0)
                 throw new InvalidOperationException("State machine is already started.");
@@ -54,15 +55,15 @@ namespace Enderlook.StateMachine
             ExecuteStateEntry(state, parameter);
         }
 
-        /// <inheritdoc cref="Fire(TEvent, object)"/>
-        public void Fire(TEvent @event) => Fire(@event, null);
+        /// <inheritdoc cref="Fire(TEvent, TParameter)"/>
+        public void Fire(TEvent @event) => Fire(@event, default);
 
         /// <summary>
         /// Fires an event.
         /// </summary>
         /// <param name="event">Event to fire.</param>
         /// <param name="parameter">Parameter of the event.</param>
-        public void Fire(TEvent @event, object parameter)
+        public void Fire(TEvent @event, TParameter parameter)
         {
             if (this.currentState < 0)
                 throw new InvalidOperationException("State machine has not started.");
@@ -96,14 +97,14 @@ namespace Enderlook.StateMachine
                 throw new ArgumentException($"State {currentState.state} doesn't have any transition with event {@event}");
         }
 
-        /// <inheritdoc cref="Update(object)"/>
-        public void Update() => Update(null);
+        /// <inheritdoc cref="Update(TParameter)"/>
+        public void Update() => Update(default);
 
         /// <summary>
         /// Executes the update event of the current state if has any.
         /// </summary>
         /// <param name="parameter">Parameter of the event.</param>
-        public void Update(object parameter)
+        public void Update(TParameter parameter)
         {
             if (currentState < 0)
                 throw new InvalidOperationException("State machine has not started.");
@@ -111,7 +112,7 @@ namespace Enderlook.StateMachine
             ExecuteVoid(states[currentState].onUpdate, parameter);
         }
 
-        private bool InspectSubTransition(int subTransitionIndex, State<TState, TEvent> currentState, object parameter)
+        private bool InspectSubTransition(int subTransitionIndex, State<TState, TEvent> currentState, TParameter parameter)
         {
             Transition<TState, TEvent> transition = transitions[subTransitionIndex];
             if (TryGuard(transition, parameter))
@@ -132,14 +133,14 @@ namespace Enderlook.StateMachine
             return false;
         }
 
-        private void ExecuteTransitionQueue(object parameter)
+        private void ExecuteTransitionQueue(TParameter parameter)
         {
             for (int i = 0; i < transitionsToExecute.Count; i++)
                 ExecuteTransition(transitionsToExecute[i], parameter);
             transitionsToExecute.Clear();
         }
 
-        private bool TryGuard(Transition<TState, TEvent> transition, object parameter)
+        private bool TryGuard(Transition<TState, TEvent> transition, TParameter parameter)
         {
             Delegate @delegate = transition.guard;
             if (@delegate is null)
@@ -147,9 +148,9 @@ namespace Enderlook.StateMachine
             switch (@delegate)
             {
                 case Func<bool> action:
-                    return action.Invoke();
-                case Func<object, bool> action:
-                    return action.Invoke(parameter);
+                    return action();
+                case Func<TParameter, bool> action:
+                    return action(parameter);
             }
 #if DEBUG
             Debug.Fail("Impossible State");
@@ -157,7 +158,7 @@ namespace Enderlook.StateMachine
             return true;
         }
 
-        private void TryGoto(Transition<TState, TEvent> transition, State<TState, TEvent> currentState, object parameter)
+        private void TryGoto(Transition<TState, TEvent> transition, State<TState, TEvent> currentState, TParameter parameter)
         {
             if (transition.Maintain)
                 return;
@@ -168,26 +169,26 @@ namespace Enderlook.StateMachine
             ExecuteStateEntry(states[@goto], parameter);
         }
 
-        private void ExecuteStateEntry(State<TState, TEvent> state, object parameter)
+        private void ExecuteStateEntry(State<TState, TEvent> state, TParameter parameter)
             => ExecuteVoid(state.onEntry, parameter);
 
-        private void ExecuteStateExit(State<TState, TEvent> state, object parameter)
+        private void ExecuteStateExit(State<TState, TEvent> state, TParameter parameter)
             => ExecuteVoid(state.onExit, parameter);
 
-        private void ExecuteTransition(Transition<TState, TEvent> transition, object parameter)
+        private void ExecuteTransition(Transition<TState, TEvent> transition, TParameter parameter)
             => ExecuteVoid(transition.action, parameter);
 
-        private void ExecuteVoid(Delegate @delegate, object parameter)
+        private void ExecuteVoid(Delegate @delegate, TParameter parameter)
         {
             if (@delegate is null)
                 return;
             switch (@delegate)
             {
                 case Action action:
-                    action.Invoke();
+                    action();
                     break;
-                case Action<object> action:
-                    action.Invoke(parameter);
+                case Action<TParameter> action:
+                    action(parameter);
                     break;
             }
         }

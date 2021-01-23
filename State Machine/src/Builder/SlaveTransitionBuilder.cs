@@ -9,15 +9,16 @@ namespace Enderlook.StateMachine
     /// </summary>
     /// <typeparam name="TState">Type that determines states.</typeparam>
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
+    /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
     /// <typeparam name="TParent">Type of parent which creates this instance.</typeparam>
-    public class SlaveTransitionBuilder<TState, TEvent, TParent> : TransitionBuilder<TState, TEvent>
+    public class SlaveTransitionBuilder<TState, TEvent, TParameter, TParent> : TransitionBuilder<TState, TEvent>
         where TState : IComparable
         where TEvent : IComparable
         where TParent : TransitionBuilder<TState, TEvent>
     {
         private Delegate guard;
         private TParent parent;
-        private List<SlaveTransitionBuilder<TState, TEvent, SlaveTransitionBuilder<TState, TEvent, TParent>>> slaves;
+        private List<SlaveTransitionBuilder<TState, TEvent, TParameter, SlaveTransitionBuilder<TState, TEvent, TParameter, TParent>>> slaves;
         internal override TState SelfState => parent.SelfState;
 
         internal SlaveTransitionBuilder(Delegate guard, TParent parent)
@@ -35,11 +36,11 @@ namespace Enderlook.StateMachine
         public TParent Otherwise() => parent;
 
         /// <inheritdoc cref="If(Delegate)"/>
-        public SlaveTransitionBuilder<TState, TEvent, SlaveTransitionBuilder<TState, TEvent, TParent>> If(Func<bool> guard)
+        public SlaveTransitionBuilder<TState, TEvent, TParameter, SlaveTransitionBuilder<TState, TEvent, TParameter, TParent>> If(Func<bool> guard)
             => If((Delegate)guard);
 
         /// <inheritdoc cref="If(Delegate)"/>
-        public SlaveTransitionBuilder<TState, TEvent, SlaveTransitionBuilder<TState, TEvent, TParent>> If(Func<object, bool> guard)
+        public SlaveTransitionBuilder<TState, TEvent, TParameter, SlaveTransitionBuilder<TState, TEvent, TParameter, TParent>> If(Func<TParameter, bool> guard)
             => If((Delegate)guard);
 
         /// <summary>
@@ -48,11 +49,11 @@ namespace Enderlook.StateMachine
         /// <param name="guard">Condition to execute transition.</param>
         /// <returns>Sub transition.</returns>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="guard"/> is <see langword="null"/>.</exception>
-        private SlaveTransitionBuilder<TState, TEvent, SlaveTransitionBuilder<TState, TEvent, TParent>> If(Delegate guard)
+        private SlaveTransitionBuilder<TState, TEvent, TParameter, SlaveTransitionBuilder<TState, TEvent, TParameter, TParent>> If(Delegate guard)
         {
-            SlaveTransitionBuilder<TState, TEvent, SlaveTransitionBuilder<TState, TEvent, TParent>> slave = new SlaveTransitionBuilder<TState, TEvent, SlaveTransitionBuilder<TState, TEvent, TParent>>(guard, this);
+            SlaveTransitionBuilder<TState, TEvent, TParameter, SlaveTransitionBuilder<TState, TEvent, TParameter, TParent>> slave = new SlaveTransitionBuilder<TState, TEvent, TParameter, SlaveTransitionBuilder<TState, TEvent, TParameter, TParent>>(guard, this);
             if (slaves is null)
-                slaves = new List<SlaveTransitionBuilder<TState, TEvent, SlaveTransitionBuilder<TState, TEvent, TParent>>>();
+                slaves = new List<SlaveTransitionBuilder<TState, TEvent, TParameter, SlaveTransitionBuilder<TState, TEvent, TParameter, TParent>>>();
             slaves.Add(slave);
             return slave;
         }
@@ -64,7 +65,7 @@ namespace Enderlook.StateMachine
             (int from, int to) range = transitions.Reserve(slaves.Count);
 
             int i = range.from;
-            foreach (SlaveTransitionBuilder<TState, TEvent, SlaveTransitionBuilder<TState, TEvent, TParent>> slave in slaves)
+            foreach (SlaveTransitionBuilder<TState, TEvent, TParameter, SlaveTransitionBuilder<TState, TEvent, TParameter, TParent>> slave in slaves)
             {
                 transitions.Store(slave.ToTransition(transitions, statesMap, currentState), i);
                 i++;
@@ -98,14 +99,14 @@ namespace Enderlook.StateMachine
         }
 
         /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.ExecuteCore(Delegate)"/>
-        public SlaveTransitionBuilder<TState, TEvent, TParent> Execute(Action<object> action)
+        public SlaveTransitionBuilder<TState, TEvent, TParameter, TParent> Execute(Action<TParameter> action)
         {
             ExecuteCore(action);
             return this;
         }
 
         /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.ExecuteCore(Delegate)"/>
-        public SlaveTransitionBuilder<TState, TEvent, TParent> Execute(Action action)
+        public SlaveTransitionBuilder<TState, TEvent, TParameter, TParent> Execute(Action action)
         {
             ExecuteCore(action);
             return this;
