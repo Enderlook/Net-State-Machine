@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Enderlook.StateMachine
 {
@@ -25,9 +26,9 @@ namespace Enderlook.StateMachine
         /// </list>
         /// </summary>
         public readonly int @goto;
-        public readonly Delegate action;
+        private readonly Delegate action;
         public readonly (int from, int to) transitions;
-        public readonly Delegate guard;
+        private readonly Delegate guard;
         public bool Maintain => @goto == -1;
 
         public Transition(int @goto, Delegate action, (int, int) transitions)
@@ -42,5 +43,30 @@ namespace Enderlook.StateMachine
         public Transition(int @goto, Delegate action, (int, int) transitions, Delegate guard)
             : this(@goto, action, transitions)
             => this.guard = guard;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Run<TParameter>(TParameter parameter) => Helper.ExecuteVoid(action, parameter);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGuard<TParameter>(TParameter parameter)
+        {
+            if (guard is null)
+                return true;
+            switch (guard)
+            {
+                case Func<bool> action:
+                    return action();
+                case Func<TParameter, bool> action:
+                    return action(parameter);
+            }
+#if DEBUG
+            Debug.Fail("Impossible State");
+#endif
+            return true;
+        }
+
+        [Conditional("DEBUG")]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void DebugEnsureNoGuard() => Debug.Assert(guard is null, "Master transition can't have guard.");
     }
 }

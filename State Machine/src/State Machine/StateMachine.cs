@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Enderlook.StateMachine
 {
@@ -51,8 +52,7 @@ namespace Enderlook.StateMachine
             if (currentState >= 0)
                 throw new InvalidOperationException("State machine is already started.");
             currentState = -(currentState + 1);
-            State<TState, TEvent> state = states[currentState];
-            ExecuteStateEntry(state, parameter);
+            states[currentState].RunEntry(parameter);
         }
 
         /// <inheritdoc cref="Fire(TEvent, TParameter)"/>
@@ -72,11 +72,11 @@ namespace Enderlook.StateMachine
             if (currentState.transitions.TryGetValue(@event, out int transitionIndex))
             {
                 Transition<TState, TEvent> transition = transitions[transitionIndex];
-                Debug.Assert(transition.guard is null, "Master transition can't have guard.");
+                transition.DebugEnsureNoGuard();
                 (int from, int to) = transition.transitions;
                 if (from == 0 && to == 0)
                 {
-                    ExecuteTransition(transition, parameter);
+                    transition.Run(parameter);
                     TryGoto(transition, currentState, parameter);
                 }
                 else
@@ -85,11 +85,11 @@ namespace Enderlook.StateMachine
                     {
                         if (InspectSubTransition(i, currentState, parameter))
                         {
-                            ExecuteTransition(transition, parameter);
+                            transition.Run(parameter);
                             return;
                         }
                     }
-                    ExecuteTransition(transition, parameter);
+                    transition.Run(parameter);
                     TryGoto(transition, currentState, parameter);
                 }
             }
@@ -98,24 +98,27 @@ namespace Enderlook.StateMachine
         }
 
         /// <inheritdoc cref="Update(TParameter)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Update() => Update(default);
 
         /// <summary>
         /// Executes the update event of the current state if has any.
         /// </summary>
         /// <param name="parameter">Parameter of the event.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Update(TParameter parameter)
         {
             if (currentState < 0)
                 throw new InvalidOperationException("State machine has not started.");
 
-            ExecuteVoid(states[currentState].onUpdate, parameter);
+            states[currentState].RunUpdate(parameter);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool InspectSubTransition(int subTransitionIndex, in State<TState, TEvent> currentState, TParameter parameter)
         {
             Transition<TState, TEvent> transition = transitions[subTransitionIndex];
-            if (TryGuard(transition, parameter))
+            if (transition.TryGuard(parameter))
             {
                 transitionsToExecute.Add(transition);
 
@@ -133,64 +136,24 @@ namespace Enderlook.StateMachine
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ExecuteTransitionQueue(TParameter parameter)
         {
             for (int i = 0; i < transitionsToExecute.Count; i++)
-                ExecuteTransition(transitionsToExecute[i], parameter);
+                transitionsToExecute[i].Run(parameter);
             transitionsToExecute.Clear();
         }
 
-        private bool TryGuard(in Transition<TState, TEvent> transition, TParameter parameter)
-        {
-            Delegate @delegate = transition.guard;
-            if (@delegate is null)
-                return true;
-            switch (@delegate)
-            {
-                case Func<bool> action:
-                    return action();
-                case Func<TParameter, bool> action:
-                    return action(parameter);
-            }
-#if DEBUG
-            Debug.Fail("Impossible State");
-#endif
-            return true;
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void TryGoto(in Transition<TState, TEvent> transition, in State<TState, TEvent> currentState, TParameter parameter)
         {
             if (transition.Maintain)
                 return;
 
-            ExecuteStateExit(currentState, parameter);
+            currentState.RunExit(parameter);
             int @goto = transition.@goto;
             this.currentState = @goto;
-            ExecuteStateEntry(states[@goto], parameter);
-        }
-
-        private void ExecuteStateEntry(State<TState, TEvent> state, TParameter parameter)
-            => ExecuteVoid(state.onEntry, parameter);
-
-        private void ExecuteStateExit(State<TState, TEvent> state, TParameter parameter)
-            => ExecuteVoid(state.onExit, parameter);
-
-        private void ExecuteTransition(in Transition<TState, TEvent> transition, TParameter parameter)
-            => ExecuteVoid(transition.action, parameter);
-
-        private void ExecuteVoid(Delegate @delegate, TParameter parameter)
-        {
-            if (@delegate is null)
-                return;
-            switch (@delegate)
-            {
-                case Action action:
-                    action();
-                    break;
-                case Action<TParameter> action:
-                    action(parameter);
-                    break;
-            }
+            states[@goto].RunEntry(parameter);
         }
     }
 }

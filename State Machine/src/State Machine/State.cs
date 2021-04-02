@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Enderlook.StateMachine
 {
@@ -8,9 +9,9 @@ namespace Enderlook.StateMachine
         where TEvent : IComparable
     {
         public readonly TState state;
-        public readonly Delegate onEntry;
-        public readonly Delegate onExit;
-        public readonly Delegate onUpdate;
+        private readonly Delegate onEntry;
+        private readonly Delegate onExit;
+        private readonly Delegate onUpdate;
         public readonly Dictionary<TEvent, int> transitions;
 
         public State(TState state, Delegate onEntry, Delegate onExit, Delegate onUpdate, Dictionary<TEvent, int> transitions)
@@ -21,5 +22,14 @@ namespace Enderlook.StateMachine
             this.onUpdate = onUpdate;
             this.transitions = transitions;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RunExit<TParameter>(TParameter parameter) => Helper.ExecuteVoid(onExit, parameter);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RunEntry<TParameter>(TParameter parameter) => Helper.ExecuteVoid(onEntry, parameter);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RunUpdate<TParameter>(TParameter parameter) => Helper.ExecuteVoid(onUpdate, parameter);
     }
 }

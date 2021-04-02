@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Enderlook.StateMachine
 {
@@ -41,6 +42,28 @@ namespace Enderlook.StateMachine
             });
             action = null;
             return actionWithParameter;
+        }
+
+        /// <summary>
+        /// Executes the specified delegate.
+        /// </summary>
+        /// <typeparam name="TParameter">Type of the parameter.</typeparam>
+        /// <param name="delegate">Delegate to execute.</param>
+        /// <param name="parameter">Parameter to pass to delegate.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ExecuteVoid<TParameter>(Delegate @delegate, TParameter parameter)
+        {
+            if (@delegate is null)
+                return;
+            switch (@delegate)
+            {
+                case Action action:
+                    action();
+                    break;
+                case Action<TParameter> action:
+                    action(parameter);
+                    break;
+            }
         }
     }
 }
