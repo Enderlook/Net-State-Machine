@@ -198,3 +198,4 @@ We added the generic parameter `TParameter` instead of using a simple `Object` t
 - Add `TParameter` on `StateMachine` and other classes to specify a common ground type for event parameters.
 - Rename `.Execute(...)` to `.Do(...)`, `ExecuteOnEntry(...)` to `OnEntry(...)`, `ExecuteOnExit(...)` to `OnExit(...)` and `ExecuteOnUpdate(...)` to `OnUpadate(...)` for more fluent API.
 - Support multiple calls to delegate subscription methods instead of throwing `InvalidOperationException` on the second call.
+- Improve perfomance by passing internal large structs by reference.

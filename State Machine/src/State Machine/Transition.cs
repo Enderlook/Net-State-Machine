@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Enderlook.StateMachine
 {
-    internal struct Transition<TState, TEvent>
+    internal readonly struct Transition<TState, TEvent>
         where TState : IComparable
         where TEvent : IComparable
     {
@@ -24,10 +24,10 @@ namespace Enderlook.StateMachine
         ///     </item>
         /// </list>
         /// </summary>
-        public int @goto;
-        public Delegate action;
-        public (int from, int to) transitions;
-        public Delegate guard;
+        public readonly int @goto;
+        public readonly Delegate action;
+        public readonly (int from, int to) transitions;
+        public readonly Delegate guard;
         public bool Maintain => @goto == -1;
 
         public Transition(int @goto, Delegate action, (int, int) transitions)

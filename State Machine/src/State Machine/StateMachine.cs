@@ -112,7 +112,7 @@ namespace Enderlook.StateMachine
             ExecuteVoid(states[currentState].onUpdate, parameter);
         }
 
-        private bool InspectSubTransition(int subTransitionIndex, State<TState, TEvent> currentState, TParameter parameter)
+        private bool InspectSubTransition(int subTransitionIndex, in State<TState, TEvent> currentState, TParameter parameter)
         {
             Transition<TState, TEvent> transition = transitions[subTransitionIndex];
             if (TryGuard(transition, parameter))
@@ -140,7 +140,7 @@ namespace Enderlook.StateMachine
             transitionsToExecute.Clear();
         }
 
-        private bool TryGuard(Transition<TState, TEvent> transition, TParameter parameter)
+        private bool TryGuard(in Transition<TState, TEvent> transition, TParameter parameter)
         {
             Delegate @delegate = transition.guard;
             if (@delegate is null)
@@ -158,7 +158,7 @@ namespace Enderlook.StateMachine
             return true;
         }
 
-        private void TryGoto(Transition<TState, TEvent> transition, State<TState, TEvent> currentState, TParameter parameter)
+        private void TryGoto(in Transition<TState, TEvent> transition, in State<TState, TEvent> currentState, TParameter parameter)
         {
             if (transition.Maintain)
                 return;
@@ -175,7 +175,7 @@ namespace Enderlook.StateMachine
         private void ExecuteStateExit(State<TState, TEvent> state, TParameter parameter)
             => ExecuteVoid(state.onExit, parameter);
 
-        private void ExecuteTransition(Transition<TState, TEvent> transition, TParameter parameter)
+        private void ExecuteTransition(in Transition<TState, TEvent> transition, TParameter parameter)
             => ExecuteVoid(transition.action, parameter);
 
         private void ExecuteVoid(Delegate @delegate, TParameter parameter)
