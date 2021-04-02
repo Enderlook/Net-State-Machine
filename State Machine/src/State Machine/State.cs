@@ -12,7 +12,7 @@ namespace Enderlook.StateMachine
         private readonly Delegate onEntry;
         private readonly Delegate onExit;
         private readonly Delegate onUpdate;
-        public readonly Dictionary<TEvent, int> transitions;
+        private readonly Dictionary<TEvent, int> transitions;
 
         public State(TState state, Delegate onEntry, Delegate onExit, Delegate onUpdate, Dictionary<TEvent, int> transitions)
         {
@@ -31,5 +31,13 @@ namespace Enderlook.StateMachine
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RunUpdate<TParameter>(TParameter parameter) => Helper.ExecuteVoid(onUpdate, parameter);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetTransitionIndex(TEvent @event)
+        {
+            if (transitions.TryGetValue(@event, out int transitionIndex))
+                return transitionIndex;
+            throw new ArgumentException($"State {state} doesn't have any transition with event {@event}");
+        }
     }
 }

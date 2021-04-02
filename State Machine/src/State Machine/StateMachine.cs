@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.StateMachine
@@ -69,32 +68,30 @@ namespace Enderlook.StateMachine
                 throw new InvalidOperationException("State machine has not started.");
 
             State<TState, TEvent> currentState = states[this.currentState];
-            if (currentState.transitions.TryGetValue(@event, out int transitionIndex))
+
+            int transitionIndex = currentState.GetTransitionIndex(@event);
+            Transition<TState, TEvent> transition = transitions[transitionIndex];
+            transition.DebugEnsureNoGuard();
+
+            (int from, int to) = transition.transitions;
+            if (from == 0 && to == 0)
             {
-                Transition<TState, TEvent> transition = transitions[transitionIndex];
-                transition.DebugEnsureNoGuard();
-                (int from, int to) = transition.transitions;
-                if (from == 0 && to == 0)
-                {
-                    transition.Run(parameter);
-                    TryGoto(transition, currentState, parameter);
-                }
-                else
-                {
-                    for (int i = from; i < to; i++)
-                    {
-                        if (InspectSubTransition(i, currentState, parameter))
-                        {
-                            transition.Run(parameter);
-                            return;
-                        }
-                    }
-                    transition.Run(parameter);
-                    TryGoto(transition, currentState, parameter);
-                }
+                transition.Run(parameter);
+                TryGoto(transition, currentState, parameter);
             }
             else
-                throw new ArgumentException($"State {currentState.state} doesn't have any transition with event {@event}");
+            {
+                for (int i = from; i < to; i++)
+                {
+                    if (InspectSubTransition(i, currentState, parameter))
+                    {
+                        transition.Run(parameter);
+                        return;
+                    }
+                }
+                transition.Run(parameter);
+                TryGoto(transition, currentState, parameter);
+            }
         }
 
         /// <inheritdoc cref="Update(TParameter)"/>
