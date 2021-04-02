@@ -185,6 +185,7 @@ For example:
 `Start()` also have `Start(Object)`, where `Object` is used in `ExecuteOnEntry(Action<Object>)` of the initial state.
 
 # Changelog
+
 ## 0.1.1
 - Fix `.GotoSelf()` requiring an state and producing `StackOverflowException`.
 - Fix documentation references.
