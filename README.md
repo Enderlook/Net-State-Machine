@@ -50,14 +50,14 @@ public class Character
 			.SetInitialState(States.Sleep)
 			.In(States.Sleep)
 				// Executed every time we enter to this state
-				.ExecuteOnEntry(() => Console.WriteLine("Going to bed."))        
+				.OnEntry(() => Console.WriteLine("Going to bed."))        
 				// Executed every time we exit from this state
-				.ExecuteOnExit(() => Console.WriteLine("Getting up."))
+				.OnExit(() => Console.WriteLine("Getting up."))
 				// Executed every time StateMachine.Update() is executed and is in this state
-				.ExecuteOnUpdate(OnUpdateSleep)
+				.OnUpdate(OnUpdateSleep)
 				.On(Events.HasFullHealth)
 					// Executed every time this event is raised in this state
-					.Execute(() => Console.WriteLine("Pick toys."))
+					.Do(() => Console.WriteLine("Pick toys."))
 					.Goto(States.Play)
 				.On(Events.IsHungry)
 					.If(IsVeryWounded)
@@ -76,13 +76,13 @@ public class Character
 				// (If we don't add this and we accidentally raise this event an exception is thrown).
 				.Ignore(Events.LowHealth)
 			.In(States.Play)
-				.ExecuteOnUpdate(OnUpdatePlay)
+				.OnUpdate(OnUpdatePlay)
 				.On(Events.IsHungry)
 					.If(IsWounded)
 						.Goto(States.Gather)
 					.Goto(States.Hunt)
 			.In(States.Gather)
-				.ExecuteOnUpdate(OnUpdateGather)
+				.OnUpdate(OnUpdateGather)
 				.On(Events.IsNoLongerHungry)
 					.If(IsWounded)
 						.Goto(States.Sleep)
@@ -90,9 +90,9 @@ public class Character
 				.On(Events.HasFullHealth)
 					.Goto(States.Hunt)
 			.In(States.Hunt)
-				.ExecuteOnEntry(() => Console.WriteLine("Take bow."))
-				.ExecuteOnExit(() => Console.WriteLine("Drop bow."))
-				.ExecuteOnUpdate(OnUpdateHunt)
+				.OnEntry(() => Console.WriteLine("Take bow."))
+				.OnExit(() => Console.WriteLine("Drop bow."))
+				.OnUpdate(OnUpdateHunt)
 				.On(Events.IsNoLongerHungry)
 					.Goto(States.Sleep)
 				.On(Events.LowHealth)
@@ -196,3 +196,4 @@ We added the generic parameter `TParameter` instead of using a simple `Object` t
 ## 0.2.0
 - Fix documentation references.
 - Add `TParameter` on `StateMachine` and other classes to specify a common ground type for event parameters.
+- Rename `.Execute(...)` to `.Do(...)`, `ExecuteOnEntry(...)` to `OnEntry(...)`, `ExecuteOnExit(...)` to `OnExit(...)` and `ExecuteOnUpdate(...)` to `OnUpadate(...)` for more fluent API.

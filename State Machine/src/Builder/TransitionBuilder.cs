@@ -93,7 +93,7 @@ namespace Enderlook.StateMachine
         /// <returns><see cref="this"/>.</returns>
         /// <exception cref="InvalidOperationException">Thrown when already has registered an action.</exception>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-        protected void ExecuteCore(Delegate action)
+        protected void DoCore(Delegate action)
         {
             if (!(this.action is null))
                 throw new InvalidOperationException("Already has a registered action.");

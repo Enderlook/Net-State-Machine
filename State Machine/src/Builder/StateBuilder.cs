@@ -40,7 +40,7 @@ namespace Enderlook.StateMachine
         /// <returns><see cref="this"/>.</returns>
         /// <exception cref="InvalidOperationException">Thrown when this state already has a registered entry action.</exception>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-        private StateBuilder<TState, TEvent, TParameter> ExecuteOnEntry(Delegate action)
+        private StateBuilder<TState, TEvent, TParameter> OnEntry(Delegate action)
         {
             if (!(onEntry is null))
                 throw new InvalidOperationException("Already has a registered entry action");
@@ -51,13 +51,13 @@ namespace Enderlook.StateMachine
             return this;
         }
 
-        /// <inheritdoc cref="ExecuteOnEntry(Delegate)"/>
-        public StateBuilder<TState, TEvent, TParameter> ExecuteOnEntry(Action action)
-            => ExecuteOnEntry((Delegate)action);
+        /// <inheritdoc cref="OnEntry(Delegate)"/>
+        public StateBuilder<TState, TEvent, TParameter> OnEntry(Action action)
+            => OnEntry((Delegate)action);
 
-        /// <inheritdoc cref="ExecuteOnEntry(Delegate)"/>
-        public StateBuilder<TState, TEvent, TParameter> ExecuteOnEntry(Action<TParameter> action)
-            => ExecuteOnEntry((Delegate)action);
+        /// <inheritdoc cref="OnEntry(Delegate)"/>
+        public StateBuilder<TState, TEvent, TParameter> OnEntry(Action<TParameter> action)
+            => OnEntry((Delegate)action);
 
         /// <summary>
         /// Determines an action to execute on exit of this state.
@@ -66,7 +66,7 @@ namespace Enderlook.StateMachine
         /// <returns><see cref="this"/>.</returns>
         /// <exception cref="InvalidOperationException">Thrown when this state already has a registered exit action.</exception>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-        private StateBuilder<TState, TEvent, TParameter> ExecuteOnExit(Delegate action)
+        private StateBuilder<TState, TEvent, TParameter> OnExit(Delegate action)
         {
             if (!(onExit is null))
                 throw new InvalidOperationException("Already has a registered exit action");
@@ -77,13 +77,13 @@ namespace Enderlook.StateMachine
             return this;
         }
 
-        /// <inheritdoc cref="ExecuteOnExit(Delegate)"/>
-        public StateBuilder<TState, TEvent, TParameter> ExecuteOnExit(Action action)
-            => ExecuteOnExit((Delegate)action);
+        /// <inheritdoc cref="OnExit(Delegate)"/>
+        public StateBuilder<TState, TEvent, TParameter> OnExit(Action action)
+            => OnExit((Delegate)action);
 
-        /// <inheritdoc cref="ExecuteOnExit(Delegate)"/>
-        public StateBuilder<TState, TEvent, TParameter> ExecuteOnExit(Action<TParameter> action)
-            => ExecuteOnExit((Delegate)action);
+        /// <inheritdoc cref="OnExit(Delegate)"/>
+        public StateBuilder<TState, TEvent, TParameter> OnExit(Action<TParameter> action)
+            => OnExit((Delegate)action);
 
         /// <summary>
         /// Determines an action to execute on update while in this state.
@@ -92,7 +92,7 @@ namespace Enderlook.StateMachine
         /// <returns><see cref="this"/>.</returns>
         /// <exception cref="InvalidOperationException">Thrown when this state already has a registered update action.</exception>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-        private StateBuilder<TState, TEvent, TParameter> ExecuteOnUpdate(Delegate action)
+        private StateBuilder<TState, TEvent, TParameter> OnUpdate(Delegate action)
         {
             if (!(onUpdate is null))
                 throw new InvalidOperationException("Already has a registered entry action");
@@ -103,13 +103,13 @@ namespace Enderlook.StateMachine
             return this;
         }
 
-        /// <inheritdoc cref="ExecuteOnUpdate(Delegate)"/>
-        public StateBuilder<TState, TEvent, TParameter> ExecuteOnUpdate(Action action)
-            => ExecuteOnUpdate((Delegate)action);
+        /// <inheritdoc cref="OnUpdate(Delegate)"/>
+        public StateBuilder<TState, TEvent, TParameter> OnUpdate(Action action)
+            => OnUpdate((Delegate)action);
 
-        /// <inheritdoc cref="ExecuteOnUpdate(Delegate)"/>
-        public StateBuilder<TState, TEvent, TParameter> ExecuteOnUpdate(Action<TParameter> action)
-            => ExecuteOnUpdate((Delegate)action);
+        /// <inheritdoc cref="OnUpdate(Delegate)"/>
+        public StateBuilder<TState, TEvent, TParameter> OnUpdate(Action<TParameter> action)
+            => OnUpdate((Delegate)action);
 
         /// <summary>
         /// Add a behaviour that is executed on an event.

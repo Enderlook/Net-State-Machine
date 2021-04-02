@@ -84,17 +84,17 @@ namespace Enderlook.StateMachine
             return parent;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.ExecuteCore(Delegate)"/>
-        public MasterTransitionBuilder<TState, TEvent, TParameter> Execute(Action<TParameter> action)
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.DoCore(Delegate)"/>
+        public MasterTransitionBuilder<TState, TEvent, TParameter> Do(Action<TParameter> action)
         {
-            ExecuteCore(action);
+            DoCore(action);
             return this;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.ExecuteCore(Delegate)"/>
-        public MasterTransitionBuilder<TState, TEvent, TParameter> Execute(Action action)
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.DoCore(Delegate)"/>
+        public MasterTransitionBuilder<TState, TEvent, TParameter> Do(Action action)
         {
-            ExecuteCore(action);
+            DoCore(action);
             return this;
         }
     }
