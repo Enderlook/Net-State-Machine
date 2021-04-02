@@ -10,7 +10,7 @@ namespace Enderlook.StateMachine
     /// <typeparam name="TState">Type that determines states.</typeparam>
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
     /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
-    public class MasterTransitionBuilder<TState, TEvent, TParameter> : TransitionBuilder<TState, TEvent>
+    public class MasterTransitionBuilder<TState, TEvent, TParameter> : TransitionBuilder<TState, TEvent, TParameter>
         where TState : IComparable
         where TEvent : IComparable
     {
@@ -47,7 +47,7 @@ namespace Enderlook.StateMachine
         internal override Transition<TState, TEvent> ToTransition(ListSlot<Transition<TState, TEvent>> transitions, Dictionary<TState, int> statesMap, TState currentState)
         {
             if (slaves == null)
-                return new Transition<TState, TEvent>(GetGoto(statesMap, currentState), action, (0, 0));
+                return new Transition<TState, TEvent>(GetGoto(statesMap, currentState), GetDo(), (0, 0));
             (int from, int to) range = transitions.Reserve(slaves.Count);
 
             int i = range.from;
@@ -58,40 +58,40 @@ namespace Enderlook.StateMachine
             }
             Debug.Assert(i == range.to);
 
-            return new Transition<TState, TEvent>(GetGoto(statesMap, currentState), action, range);
+            return new Transition<TState, TEvent>(GetGoto(statesMap, currentState), GetDo(), range);
         }
 
         private protected override bool HasSubTransitions() => slaves.Count > 0;
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.GotoCore(TState)"/>
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent, TParameter}.GotoCore(TState)"/>
         public StateBuilder<TState, TEvent, TParameter> Goto(TState state)
         {
             GotoCore(state);
             return parent;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.GotoSelfCore()"/>
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent, TParameter}.GotoSelfCore()"/>
         public StateBuilder<TState, TEvent, TParameter> GotoSelf()
         {
             GotoSelfCore();
             return parent;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.StaySelfCore()"/>
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent, TParameter}.StaySelfCore()"/>
         public StateBuilder<TState, TEvent, TParameter> StaySelf()
         {
             StaySelfCore();
             return parent;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.DoCore(Delegate)"/>
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent, TParameter}.DoCore(Action{TParameter})"/>
         public MasterTransitionBuilder<TState, TEvent, TParameter> Do(Action<TParameter> action)
         {
             DoCore(action);
             return this;
         }
 
-        /// <inheritdoc cref="TransitionBuilder{TState, TEvent}.DoCore(Delegate)"/>
+        /// <inheritdoc cref="TransitionBuilder{TState, TEvent, TParameter}.DoCore(Action)"/>
         public MasterTransitionBuilder<TState, TEvent, TParameter> Do(Action action)
         {
             DoCore(action);

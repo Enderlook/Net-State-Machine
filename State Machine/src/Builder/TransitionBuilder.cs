@@ -8,7 +8,8 @@ namespace Enderlook.StateMachine
     /// </summary>
     /// <typeparam name="TState">Type that determines states.</typeparam>
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
-    public abstract class TransitionBuilder<TState, TEvent>
+    /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
+    public abstract class TransitionBuilder<TState, TEvent, TParameter>
         where TState : IComparable
         where TEvent : IComparable
     {
@@ -39,7 +40,8 @@ namespace Enderlook.StateMachine
         /// </summary>
         protected int hasGoto;
         protected TState @goto;
-        protected Delegate action;
+        protected Action @do;
+        protected Action<TParameter> doWithParameter;
         internal abstract TState SelfState { get; }
 
         /// <summary>
@@ -91,17 +93,29 @@ namespace Enderlook.StateMachine
         /// </summary>
         /// <param name="action">Action to execute.</param>
         /// <returns><see cref="this"/>.</returns>
-        /// <exception cref="InvalidOperationException">Thrown when already has registered an action.</exception>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-        protected void DoCore(Delegate action)
+        protected void DoCore(Action action)
         {
-            if (!(this.action is null))
-                throw new InvalidOperationException("Already has a registered action.");
             if (action is null)
                 throw new ArgumentNullException(nameof(action));
 
-            this.action = action;
+            @do += action;
         }
+
+        /// <inheritdoc cref="DoCore(Action)"/>
+        protected void DoCore(Action<TParameter> action)
+        {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
+
+            doWithParameter += action;
+        }
+
+        /// <summary>
+        /// Get the delegate to execute when on Do event.
+        /// </summary>
+        /// <returns>Delegate to execute.</returns>
+        protected Delegate GetDo() => Helper.Combine(ref @do, ref doWithParameter);
 
         private protected int GetGoto(Dictionary<TState, int> statesMap, TState currentState)
         {
