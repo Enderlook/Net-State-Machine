@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace Enderlook.StateMachine
 {
     /// <summary>
-    /// Representation of an state machine
+    /// Representation of an state machine.
     /// </summary>
     /// <typeparam name="TState">Type that determines states.</typeparam>
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
