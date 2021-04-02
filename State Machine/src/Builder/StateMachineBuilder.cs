@@ -62,6 +62,7 @@ namespace Enderlook.StateMachine
 
             if (this.states.Count == 0)
                 throw new InvalidOperationException("The state machine builder doesn't have registered any state.");
+
             Dictionary<TState, int> statesMap = new Dictionary<TState, int>();
             int i = 0;
             foreach (KeyValuePair<TState, StateBuilder<TState, TEvent, TParameter>> kv in this.states)
