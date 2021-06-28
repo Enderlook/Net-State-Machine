@@ -200,3 +200,6 @@ We added the generic parameter `TParameter` instead of using a simple `Object` t
 - Support multiple calls to delegate subscription methods instead of throwing `InvalidOperationException` on the second call.
 - Improve perfomance by passing internal large structs by reference.
 - Turn `StateMachine<TState, TEvent, TParameter>`, `StateMachineBuilder<TState, TEvent, TParameter>`, `StateBuilder<TState, TEvent, TParameter>`, `SlaveTransitionBuilder<TState, TEvent, TParameter, TParent>` and `MasterTransitionBuilder<TState, TEvent, TParameter>` into `sealed`.
+
+## 0.2.1
+- Remove `IComparable` constraint in `TState` and `TEvent` generic parameters.

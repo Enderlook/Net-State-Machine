@@ -11,8 +11,6 @@ namespace Enderlook.StateMachine
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
     /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
     public sealed class MasterTransitionBuilder<TState, TEvent, TParameter> : TransitionBuilder<TState, TEvent, TParameter>
-        where TState : IComparable
-        where TEvent : IComparable
     {
         private List<SlaveTransitionBuilder<TState, TEvent, TParameter, MasterTransitionBuilder<TState, TEvent, TParameter>>> slaves;
         private StateBuilder<TState, TEvent, TParameter> parent;
