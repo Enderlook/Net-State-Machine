@@ -12,8 +12,6 @@ namespace Enderlook.StateMachine
     /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
     /// <typeparam name="TParent">Type of parent which creates this instance.</typeparam>
     public sealed class SlaveTransitionBuilder<TState, TEvent, TParameter, TParent> : TransitionBuilder<TState, TEvent, TParameter>
-        where TState : IComparable
-        where TEvent : IComparable
         where TParent : TransitionBuilder<TState, TEvent, TParameter>
     {
         private Delegate guard;

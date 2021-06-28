@@ -10,8 +10,6 @@ namespace Enderlook.StateMachine
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
     /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
     public abstract class TransitionBuilder<TState, TEvent, TParameter>
-        where TState : IComparable
-        where TEvent : IComparable
     {
         /// <summary>
         /// Determines the state of the <see cref="@goto"/>.

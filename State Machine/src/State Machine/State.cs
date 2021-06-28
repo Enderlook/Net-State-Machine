@@ -5,8 +5,6 @@ using System.Runtime.CompilerServices;
 namespace Enderlook.StateMachine
 {
     internal readonly struct State<TState, TEvent>
-        where TState : IComparable
-        where TEvent : IComparable
     {
         public readonly TState state;
         private readonly Delegate onEntry;

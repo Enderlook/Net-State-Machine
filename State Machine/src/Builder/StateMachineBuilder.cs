@@ -10,8 +10,6 @@ namespace Enderlook.StateMachine
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
     /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
     public sealed class StateMachineBuilder<TState, TEvent, TParameter>
-        where TState : IComparable
-        where TEvent : IComparable
     {
         private Dictionary<TState, StateBuilder<TState, TEvent, TParameter>> states = new Dictionary<TState, StateBuilder<TState, TEvent, TParameter>>();
         private bool hasInitialState;

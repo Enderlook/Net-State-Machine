@@ -5,8 +5,6 @@ using System.Runtime.CompilerServices;
 namespace Enderlook.StateMachine
 {
     internal readonly struct Transition<TState, TEvent>
-        where TState : IComparable
-        where TEvent : IComparable
     {
         /// <summary>
         /// Determines to which state move.

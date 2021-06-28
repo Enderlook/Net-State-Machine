@@ -11,8 +11,6 @@ namespace Enderlook.StateMachine
     /// <typeparam name="TEvent">Type that determines events.</typeparam>
     /// <typeparam name="TParameter">Type that determines common ground for parameters.</typeparam>
     public sealed class StateMachine<TState, TEvent, TParameter>
-        where TState : IComparable
-        where TEvent : IComparable
     {
         private int currentState;
         private List<State<TState, TEvent>> states;
