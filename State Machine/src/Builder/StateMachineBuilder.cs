@@ -47,7 +47,7 @@ namespace Enderlook.StateMachine
         }
 
         /// <summary>
-        /// Convert the builder into an immutable state machinee.
+        /// Convert the builder into an immutable state machine.
         /// </summary>
         /// <returns>Immutable state machine.</returns>
         /// <exception cref="InvalidOperationException">Thrown when there is no registered initial state.<br/>
