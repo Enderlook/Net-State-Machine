@@ -112,7 +112,7 @@ namespace Enderlook.StateMachine
         public MasterTransitionBuilder<TState, TEvent, TParameter> On(TEvent @event)
         {
             if (transitions.ContainsKey(@event))
-                throw new ArgumentException($"The event {transitions} was already registered for this state.");
+                throw new ArgumentException($"The event {@event} was already registered for this state.");
 
             MasterTransitionBuilder<TState, TEvent, TParameter> builder = new MasterTransitionBuilder<TState, TEvent, TParameter>(this);
             transitions.Add(@event, builder);
@@ -128,7 +128,7 @@ namespace Enderlook.StateMachine
         public StateBuilder<TState, TEvent, TParameter> Ignore(TEvent @event)
         {
             if (transitions.ContainsKey(@event))
-                throw new ArgumentException($"The event {transitions} was already registered for this state.");
+                throw new ArgumentException($"The event {@event} was already registered for this state.");
 
             transitions.Add(@event, null);
             return this;
