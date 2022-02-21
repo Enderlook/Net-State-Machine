@@ -55,37 +55,13 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
     /// <summary>
     /// Creates a configured and initialized <see cref="StateMachine{TState, TEvent, TRecipient}"/> using the configuration provided by this factory.
     /// </summary>
-    /// <typeparam name="TParameter">Type of parameter.</typeparam>
-    /// <param name="recipient">Recipient for the new created <see cref="StateMachine{TState, TEvent, TRecipient}"/>.</param>
-    /// <param name="parameter">Initial parameter that can be passed for the on entry callback of the initial state.</param>
-    /// <returns>New <see cref="StateMachine{TState, TEvent, TRecipient}"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public StateMachine<TState, TEvent, TRecipient> Create<TParameter>(TRecipient recipient, TParameter parameter)
-        => StateMachine<TState, TEvent, TRecipient>.From(this, recipient, InitialState, parameter);
-
-    /// <summary>
-    /// Creates a configured and initialized <see cref="StateMachine{TState, TEvent, TRecipient}"/> using the configuration provided by this factory.
-    /// </summary>
     /// <param name="recipient">Recipient for the new created <see cref="StateMachine{TState, TEvent, TRecipient}"/>.</param>
     /// <param name="parameters">Initial parameters that can be passed for the on entry callback of the initial state.</param>
     /// <returns>New <see cref="StateMachine{TState, TEvent, TRecipient}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient, ReadOnlySpan<Parameter> parameters)
+    public StateMachine<TState, TEvent, TRecipient> Create<TParameter>(TRecipient recipient, TParameter parameters)
+        where TParameter : IParameter
         => StateMachine<TState, TEvent, TRecipient>.From(this, recipient, InitialState, parameters);
-
-    /// <summary>
-    /// Creates a configured and initialized <see cref="StateMachine{TState, TEvent, TRecipient}"/> using the configuration provided by this factory.
-    /// </summary>
-    /// <param name="recipient">Recipient for the new created <see cref="StateMachine{TState, TEvent, TRecipient}"/>.</param>
-    /// <param name="parameters">Initial parameters that can be passed for the on entry callback of the initial state.</param>
-    /// <returns>New <see cref="StateMachine{TState, TEvent, TRecipient}"/>.</returns>
-    /// <exception cref="ArgumentNullException">Throw if <paramref name="parameters"/> is <see langword="null"/>.</exception>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient, IEnumerable<Parameter> parameters)
-    {
-        if (parameters is null) ThrowHelper.ThrowArgumentNullException_Parameters();
-        return StateMachine<TState, TEvent, TRecipient>.From(this, recipient, InitialState, parameters);
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ParentStateOf(TState state, [NotNullWhen(true)] out TState? parentState)

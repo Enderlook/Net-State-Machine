@@ -50,10 +50,11 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
         TRecipient recipient,
         int currentState,
         TParameter parameter)
+        where TParameter : IParameter
     {
         StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient, currentState);
         if (flyweight.RunEntryActionsOfInitialState)
-            stateMachine.RunEntryAndDisposeParameters(currentState, stateMachine.parameterIndexes.GetEnumeratorStartingAt(stateMachine.StoreParameter(parameter)));
+            stateMachine.RunEntryAndDisposeParameters(currentState, stateMachine.parameterIndexes.GetEnumeratorStartingAt(parameter.Store<Yes>(ref stateMachine.parameterIndexes, stateMachine.parameters)));
         return stateMachine;
     }
 
@@ -202,9 +203,10 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
     /// <exception cref="ArgumentNullException">Throw when <paramref name="event"/> is <see langword="null"/>.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Fire<TParameter>(TEvent @event, TParameter parameter)
+        where TParameter : IParameter
     {
         if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
-        EnqueueAndRunIfNotRunning(@event, StoreParameter(parameter));
+        EnqueueAndRunIfNotRunning(@event, parameter.Store<Yes>(ref parameterIndexes, parameters));
     }
 
     /// <summary>
@@ -232,9 +234,10 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
     /// <exception cref="ArgumentNullException">Throw when <paramref name="event"/> is <see langword="null"/>.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FireImmediately<TParameter>(TEvent @event, TParameter parameter)
+        where TParameter : IParameter
     {
         if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
-        EnqueueAndRun(@event, StoreParameter(parameter));
+        EnqueueAndRun(@event, parameter.Store<Yes>(ref parameterIndexes, parameters));
     }
 
     /// <summary>
@@ -250,7 +253,8 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
     /// <param name="parameter">Parameter that can be passed to callbacks.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Update<TParameter>(TParameter parameter)
-        => Update_(parameterIndexes.GetEnumeratorStartingAt(StoreParameter(parameter)));
+        where TParameter : IParameter
+        => Update_(parameterIndexes.GetEnumeratorStartingAt(parameter.Store<Yes>(ref parameterIndexes, parameters)));
 
     private void Update_(SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
     {
@@ -449,15 +453,5 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
             for (; index < to; index++)
                 stateEvents[index].Invoke(recipient, parametersEnumerator);
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int StoreParameter<TParameter>(TParameter parameter)
-    {
-        if (!parameters.TryGetValue(typeof(TParameter), out ParameterSlots? container))
-            parameters.Add(typeof(TParameter), container = new ParameterSlots<TParameter>());
-        Debug.Assert(container is ParameterSlots<TParameter>);
-        int index = Unsafe.As<ParameterSlots<TParameter>>(container).Store(parameter);
-        return parameterIndexes.StoreLast(new(container, index), false);
     }
 }
