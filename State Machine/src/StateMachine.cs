@@ -57,6 +57,30 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
         return stateMachine;
     }
 
+    internal static StateMachine<TState, TEvent, TRecipient> From(
+        StateMachineFactory<TState, TEvent, TRecipient> flyweight,
+        TRecipient recipient,
+        int currentState,
+        ReadOnlySpan<Parameter> parameters)
+    {
+        StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient, currentState);
+        if (flyweight.RunEntryActionsOfInitialState)
+            stateMachine.RunEntryAndDisposeParameters(currentState, stateMachine.parameterIndexes.GetEnumeratorStartingAt(stateMachine.StoreParameters(parameters)));
+        return stateMachine;
+    }
+
+    internal static StateMachine<TState, TEvent, TRecipient> From(
+        StateMachineFactory<TState, TEvent, TRecipient> flyweight,
+        TRecipient recipient,
+        int currentState,
+        IEnumerable<Parameter> parameters)
+    {
+        StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient, currentState);
+        if (flyweight.RunEntryActionsOfInitialState)
+            stateMachine.RunEntryAndDisposeParameters(currentState, stateMachine.parameterIndexes.GetEnumeratorStartingAt(stateMachine.StoreParameters(parameters)));
+        return stateMachine;
+    }
+
     /// <summary>
     /// Returns the current (possibly sub) state of this state machine.
     /// </summary>
@@ -209,6 +233,35 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
 
     /// <summary>
     /// Fire an event to the state machine.<br/>
+    /// If the state machine is already firing an state, it's enqueued to run after completion of the current event.
+    /// </summary>
+    /// <param name="event">Event to fire.</param>
+    /// <param name="parameters">Parameters that can be passed to callbacks.</param>
+    /// <exception cref="ArgumentNullException">Throw when <paramref name="event"/> is <see langword="null"/>.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Fire(TEvent @event, ReadOnlySpan<Parameter> parameters)
+    {
+        if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
+        EnqueueAndRunIfNotRunning(@event, StoreParameters(parameters));
+    }
+
+    /// <summary>
+    /// Fire an event to the state machine.<br/>
+    /// If the state machine is already firing an state, it's enqueued to run after completion of the current event.
+    /// </summary>
+    /// <param name="event">Event to fire.</param>
+    /// <param name="parameters">Parameters that can be passed to callbacks.</param>
+    /// <exception cref="ArgumentNullException">Throw when <paramref name="event"/> or <paramref name="parameters"/> are <see langword="null"/>.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Fire(TEvent @event, IEnumerable<Parameter> parameters)
+    {
+        if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
+        if (parameters is null) ThrowHelper.ThrowArgumentNullException_Parameters();
+        EnqueueAndRunIfNotRunning(@event, StoreParameters(parameters));
+    }
+
+    /// <summary>
+    /// Fire an event to the state machine.<br/>
     /// The event won't be enqueued but actually run, ignoring previously enqueued events.<br/>
     /// If subsequent events are enqueued during the execution of the callbacks of this event, they will also be run after the completion of this event.
     /// </summary>
@@ -238,6 +291,37 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
     }
 
     /// <summary>
+    /// Fire an event to the state machine.br/>
+    /// The event won't be enqueued but actually run, ignoring previously enqueued events.<br/>
+    /// If subsequent events are enqueued during the execution of the callbacks of this event, they will also be run after the completion of this event.
+    /// </summary>
+    /// <param name="event">Event to fire.</param>
+    /// <param name="parameters">Parameters that can be passed to callbacks.</param>
+    /// <exception cref="ArgumentNullException">Throw when <paramref name="event"/> is <see langword="null"/>.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void FireImmediately(TEvent @event, ReadOnlySpan<Parameter> parameters)
+    {
+        if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
+        EnqueueAndRun(@event, StoreParameters(parameters));
+    }
+
+    /// <summary>
+    /// Fire an event to the state machine.br/>
+    /// The event won't be enqueued but actually run, ignoring previously enqueued events.<br/>
+    /// If subsequent events are enqueued during the execution of the callbacks of this event, they will also be run after the completion of this event.
+    /// </summary>
+    /// <param name="event">Event to fire.</param>
+    /// <param name="parameters">Parameters that can be passed to callbacks.</param>
+    /// <exception cref="ArgumentNullException">Throw when <paramref name="event"/> or <paramref name="parameters"/> are <see langword="null"/>.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void FireImmediately(TEvent @event, IEnumerable<Parameter> parameters)
+    {
+        if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
+        if (parameters is null) ThrowHelper.ThrowArgumentNullException_Parameters();
+        EnqueueAndRun(@event, StoreParameters(parameters));
+    }
+
+    /// <summary>
     /// Executes the update callback registered in the current state.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -251,6 +335,26 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Update<TParameter>(TParameter parameter)
         => Update_(parameterIndexes.GetEnumeratorStartingAt(StoreParameter(parameter)));
+
+    /// <summary>
+    /// Executes the update callback registered in the current state.
+    /// </summary>
+    /// <param name="parameters">Parameters that can be passed to callbacks.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(ReadOnlySpan<Parameter> parameters)
+        => Update_(parameterIndexes.GetEnumeratorStartingAt(StoreParameters(parameters)));
+
+    /// <summary>
+    /// Executes the update callback registered in the current state.
+    /// </summary>
+    /// <param name="parameters">Parameters that can be passed to callbacks.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="parameters"/> is <see langword="null"/>.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Update(IEnumerable<Parameter> parameters)
+    {
+        if (parameters is null) ThrowHelper.ThrowArgumentNullException_Parameters();
+        Update_(parameterIndexes.GetEnumeratorStartingAt(StoreParameters(parameters)));
+    }
 
     private void Update_(SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
     {
@@ -459,5 +563,29 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
         Debug.Assert(container is ParameterSlots<TParameter>);
         int index = Unsafe.As<ParameterSlots<TParameter>>(container).Store(parameter);
         return parameterIndexes.StoreLast(new(container, index), false);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int StoreParameters(ReadOnlySpan<Parameter> parameters)
+    {
+        int length = parameters.Length;
+        if (length == 0)
+            return -1;
+        int index = parameters[0].Store<Yes>(ref parameterIndexes, this.parameters);
+        for (int i = 1; i < length; i++)
+            parameters[i].Store<No>(ref parameterIndexes, this.parameters);
+        return index;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int StoreParameters(IEnumerable<Parameter> parameters)
+    {
+        using IEnumerator<Parameter> enumerator = parameters.GetEnumerator();
+        if (!enumerator.MoveNext())
+            return -1;
+        int index = enumerator.Current.Store<Yes>(ref parameterIndexes, this.parameters);
+        while (enumerator.MoveNext())
+            enumerator.Current.Store<No>(ref parameterIndexes, this.parameters);
+        return index;
     }
 }
