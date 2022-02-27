@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Enderlook.StateMachine;
@@ -16,6 +17,9 @@ internal static class ThrowHelper
 
     public static void ThrowArgumentException_AlreadyIsSubState()
         => throw new ArgumentException("The sub state was already registered.", "state");
+
+    public static void ThrowArgumentException_StateCanNotBeSubStateOfItself()
+        => throw new ArgumentException("Can't be substate of itself", "state");
 
     public static void ThrowArgumentException_StateNotFound()
         => throw new ArgumentException("The specified state was not found in the state machine.", "state");
@@ -52,6 +56,9 @@ internal static class ThrowHelper
     public static void ThrowInvalidOperationException_AlreadyHasInitialState()
         => throw new InvalidOperationException("Already has registered initial state.");
 
+    public static void ThrowInvalidOperationException_CircularReferenceOfSubstates()
+        => throw new InvalidOperationException("The state machine builder has an state which is a substate that performs a circular reference.");
+
     public static void ThrowInvalidOperationException_DoesNotHaveInitialState()
         => throw new InvalidOperationException("The state machine builder doesn't have registered an initial state.");
 
@@ -72,6 +79,7 @@ internal static class ThrowHelper
     public static void ThrowInvalidOperationException_TransitionMustHaveTerminator()
         => throw new InvalidOperationException("A transition builder from the state machine builder doesn't have a terminator, i.e: doesn't end with a call to GoTo(TState) nor StaySelf().");
 
+    [DoesNotReturn]
     public static void ThrowInvalidOperationException_StateIsSubStateOfANotRegisteredState()
         => throw new InvalidOperationException("An state builder is a substate of an state which is not registered in the state machine builder.");
 }

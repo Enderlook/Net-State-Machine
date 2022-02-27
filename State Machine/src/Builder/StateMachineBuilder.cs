@@ -81,6 +81,20 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizab
         int statesCount = this.states.Count;
         if (statesCount == 0) ThrowHelper.ThrowInvalidOperationException_DoesNotHaveRegisteredStates();
 
+        foreach (KeyValuePair<TState, StateBuilder<TState, TEvent, TRecipient>> kv in this.states)
+        {
+            TState origin = kv.Key;
+            StateBuilder<TState, TEvent, TRecipient> current = kv.Value;
+            while (current.IsSubState(out TState? state))
+            {
+                if (EqualityComparer<TState>.Default.Equals(state, origin))
+                    ThrowHelper.ThrowInvalidOperationException_CircularReferenceOfSubstates();
+                if (!this.states.TryGetValue(state, out StateBuilder<TState, TEvent, TRecipient>? newBuilder))
+                    ThrowHelper.ThrowInvalidOperationException_StateIsSubStateOfANotRegisteredState();
+                current = newBuilder;
+            }
+        }
+
         Dictionary<TState, int> statesMap = new(statesCount);
         int i = 0;
         int transitionEventsCount = 0;

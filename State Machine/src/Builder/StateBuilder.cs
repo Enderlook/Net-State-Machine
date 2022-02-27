@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.StateMachine;
@@ -53,12 +54,14 @@ public sealed class StateBuilder<TState, TEvent, TRecipient> : IFinalizable
     /// <param name="state">Parent state of this state.</param>
     /// <returns><see langword="this"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
-    /// Thrown when <paramref name="state"/> is <see langword="null"/>.</exception>
+    /// Thrown when <paramref name="state"/> is <see langword="null"/><br/>
+    /// Thrown when <paramref name="state"/> is the current state.</exception>
     public StateBuilder<TState, TEvent, TRecipient> IsSubStateOf(TState state)
     {
         if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (state is null) ThrowHelper.ThrowArgumentNullException_State();
         if (isSubState) ThrowHelper.ThrowArgumentException_AlreadyIsSubState();
+        if (EqualityComparer<TState>.Default.Equals(state, this.state)) ThrowHelper.ThrowArgumentException_StateCanNotBeSubStateOfItself();
         isSubState = true;
         subStateOf = state;
         return this;
@@ -284,6 +287,22 @@ public sealed class StateBuilder<TState, TEvent, TRecipient> : IFinalizable
     public StateBuilder<TState, TEvent, TRecipient> Ignore(TEvent @event)
         => On(@event).StaySelf();
 
+    internal bool IsSubState([NotNullWhen(true)] out TState? state)
+    {
+        if (isSubState)
+        {
+            state = subStateOf;
+            Debug.Assert(state is not null);
+            return true;
+        }
+#if NET5_0_OR_GREATER
+        Unsafe.SkipInit(out state);
+#else
+        state = default;
+#endif
+        return false;
+    }
+
     internal void PrepareAndCheck(Dictionary<TState, int> statesMap, ref int i, ref int transitionEventsCount, ref int stateEventsCount, ref int transitionsCount)
     {
         statesMap.Add(state, i++);
@@ -333,8 +352,7 @@ public sealed class StateBuilder<TState, TEvent, TRecipient> : IFinalizable
         if (isSubState)
         {
             Debug.Assert(subStateOf is not null);
-            if (!statesMap.TryGetValue(subStateOf, out int subStateOfIndex)) ThrowHelper.ThrowInvalidOperationException_StateIsSubStateOfANotRegisteredState();
-            states[iStates++] = new State<TState>(state, subStateOfIndex, onEventsStart, onUpdateLength, onEntryLength, onExitLength);
+            states[iStates++] = new State<TState>(state, statesMap[subStateOf], onEventsStart, onUpdateLength, onEntryLength, onExitLength);
         }
         else
             states[iStates++] = new State<TState>(state, -1, onEventsStart, onUpdateLength, onEntryLength, onExitLength);
