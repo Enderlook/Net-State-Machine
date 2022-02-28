@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Enderlook.StateMachine;
@@ -8,12 +7,6 @@ internal static class ThrowHelper
 {
     public static void ThrowArgumentException_AlreadyHasEvent()
         => throw new ArgumentException("The event was already registered for this state.");
-
-    public static void ThrowArgumentException_AlreadyHasInitialSubState()
-        => throw new ArgumentException("The intial sub state was already registered.", "state");
-
-    public static void ThrowArgumentException_AlreadyHasState()
-        => throw new ArgumentException("The state was already registered.", "state");
 
     public static void ThrowArgumentException_AlreadyIsSubState()
         => throw new ArgumentException("The sub state was already registered.", "state");
