@@ -56,11 +56,12 @@ public sealed class StateBuilder<TState, TEvent, TRecipient> : IFinalizable
     /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
     /// Thrown when <paramref name="state"/> is <see langword="null"/><br/>
     /// Thrown when <paramref name="state"/> is the current state.</exception>
+    /// <exception cref="InvalidOperationException">Throw when this state was already configured as a substate.</exception>
     public StateBuilder<TState, TEvent, TRecipient> IsSubStateOf(TState state)
     {
         if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (state is null) ThrowHelper.ThrowArgumentNullException_State();
-        if (isSubState) ThrowHelper.ThrowArgumentException_AlreadyIsSubState();
+        if (isSubState) ThrowHelper.ThrowInvalidOperationException_AlreadyIsSubState();
         if (EqualityComparer<TState>.Default.Equals(state, this.state)) ThrowHelper.ThrowArgumentException_StateCanNotBeSubStateOfItself();
         isSubState = true;
         subStateOf = state;

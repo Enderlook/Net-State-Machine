@@ -8,9 +8,6 @@ internal static class ThrowHelper
     public static void ThrowArgumentException_AlreadyHasEvent()
         => throw new ArgumentException("The event was already registered for this state.");
 
-    public static void ThrowArgumentException_AlreadyIsSubState()
-        => throw new ArgumentException("The sub state was already registered.", "state");
-
     public static void ThrowArgumentException_StateCanNotBeSubStateOfItself()
         => throw new ArgumentException("Can't be substate of itself", "state");
 
@@ -48,6 +45,9 @@ internal static class ThrowHelper
 
     public static void ThrowInvalidOperationException_AlreadyHasInitialState()
         => throw new InvalidOperationException("Already has registered initial state.");
+
+    public static void ThrowInvalidOperationException_AlreadyIsSubState()
+        => throw new InvalidOperationException("The sub state was already registered.");
 
     public static void ThrowInvalidOperationException_CircularReferenceOfSubstates()
         => throw new InvalidOperationException("The state machine builder has an state which is a substate that performs a circular reference.");
