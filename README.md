@@ -221,7 +221,7 @@ The following methods have overloads:
 `ExecuteOnEntry(Action)`, `ExecuteOnExit(Action)`, `ExecuteOnUpdate(Action)` and `Execute(Action)` has an additional overload: `ExecuteOnEntry(Action<TParameter>)`, `ExecuteOnExit(Action<TParameter>)`, `ExecuteOnUpdate(Action<TParameter>)` and `Execute(Action<TParameter>)`, where `TParameter` parameter is the value passed on `.Fire(TEvent, TParameter)`.
 
 The parameter `TParameter` is optional, and can be ignored.
-For example: 
+For example:
  - If you use `Fire(TEvent)` and `Execute(Action<TParameter>)`, `TParameter` is replaced by `default`.
  - If you use `Fire(TEvent, TParameter)` but `Execute(Action)`, `TParameter` is ignored.
 
@@ -273,94 +273,94 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
 {
     /// Get current (sub)state of this state machine.
     public TState CurrentState { get; }
-    
+
     /// Get current (sub)state and all its parent state hierarchy.
     public ReadOnlySlice<TState> CurrentStateHierarchy  { get; }
-    
+
     /// Get accepts events by current (sub)state.
     public ReadOnlySlice<TEvent> CurrentAcceptedEvents { get; }
-    
+
     /// Creates a factory builder.
     public static StateMachineBuilder<TState, TEvent, TRecipient> CreateFactoryBuilder();
-    
+
     /// Get the parent state of the specified state.
     /// If state is not a substate, returns false.
     public bool GetParentStateOf(TState state, [NotNullWhen(true)] out TState? parentState);
-    
+
     /// Get the parent hierarchy of the specified state. If state is not a substate, returns empty.
     public ReadOnlySlice<TState> GetParentHierarchyOf(TState state);
-    
+
     /// Get the events that are accepted by the specified state.
     public ReadOnlySlice<TEvent> GetAcceptedEventsBy(TState state);
-    
+
     /// Determines if the current state is the specified state or a (nested) substate of that specified state.
     public bool IsInState(TState state);
-    
+
     /// Fire an event to the state machine.
     /// If the state machine is already firing an state, it's enqueued to run after completion of the current event.
     public void Fire(TEvent @event);
-    
+
     /// Same as Fire(TEvent) but includes a value that can be passed to subscribed delegates.
     public void FireWithParameter<TParameter>(TEvent @event, TParameter parameter);
-    
+
     /// Same as Fire(TEvent) but returns a builder that can accept arbitrary amount of parameter that can be passed to subscribed delegates.
     public FireParametersBuilder FireWithParameters(TEvent @event);
-    
+
     /// Fire an event to the state machine.
     /// The event won't be enqueued but actually run, ignoring previously enqueued events.
     /// If subsequent events are enqueued during the execution of the callbacks of this event, they will also be run after the completion of this event.
     public void FireImmediately(TEvent @event);
-    
+
     /// Same as FireImmediately(TEvent) but includes a value that can be passed to subscribed delegates.
     public void FireImmediatelyWithParameter<TParameter>(TEvent @event, TParameter parameter);
-    
+
     /// Same as FireImmediately(TEvent) but returns a builder that can accept arbitrary amount of parameter that can be passed to subscribed delegates.
     public FireImmediatelyParametersBuilder FireImmediatelyWithParameters(TEvent @event);
-    
+
     /// Executes the update callbacks registered in the current state.
     public void Update();
-    
+
     /// Same as Update() but includes a value that can be passed to subscribed delegates.
     public void UpdateWithParameter<TParameter>(TParameter parameter);
-    
+
     /// Same as Update() but returns a builder that can accept arbitrary amount of parameter that can be passed to subscribed delegates.
     public UpdateParametersBuilder UpdateWithParameters();
 
-    public readonly struct FireParametersBuilder 
+    public readonly struct FireParametersBuilder
     {
         /// Stores a parameter tha can be passed to callbacks.
         public FireParametersBuilder With<TParameter>(TParameter parameter);
-        
+
         /// Fires the event.
         public void Done();
     }
-    
+
     public readonly struct FireImmediatelyParametersBuilder
     {
         /// Stores a parameter tha can be passed to callbacks.
         public FireImmediatelyParametersBuilder With<TParameter>(TParameter parameter);
-        
+
         /// Fires the event.
         public void Done();
     }
-    
+
     public readonly struct UpdateParametersBuilder
     {
         /// Stores a parameter tha can be passed to callbacks.
         public UpdateParametersBuilder With<TParameter>(TParameter parameter);
-        
+
         /// Executes the update.
         public void Done();
     }
-    
+
     public readonly struct CreateParametersBuilder
     {
         /// Stores a parameter tha can be passed to callbacks.
         public CreateParametersBuilder With<TParameter>(TParameter parameter);
-        
+
         /// Inialized the state machine.
         public StateMachine<TState, TEvent, TRecipient> Done();
-    }    
+    }
 }
 
 public sealed class StateMachineFactory<TState, TEvent, TRecipient>
@@ -369,12 +369,12 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
 {
     /// Creates a configured and initialized state machine using the configuration provided by this factory.
     public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
-    
+
     /// Same as Create() but includes a value that can be passed to subscribed delegates.
-    public StateMachine<TState, TEvent, TRecipient> CreateWithParameter<TParameter>(TRecipient recipient, TParameter parameter)
-    
+    public StateMachine<TState, TEvent, TRecipient> CreateWithParameter<TParameter>(TRecipient recipient, TParameter parameter);
+
     /// Same as Create() but returns a builder that can accept arbitrary amount of parameter that can be passed to subscribed delegates.
-    public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient)
+    public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient);
 }
 
 public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizable
@@ -384,10 +384,10 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizab
     /// Determines the initial state of the state machine.
     /// If `runEntryActions` is true, subscribed delegates to the OnEntry ovents of the specified state will be run during the initialization of the state machine.
     public StateMachineBuilder<TState, TEvent, TRecipient> SetInitialState(TState state, bool runEntryActions = true);
-    
+
     ///  Add a new state or loads a previously added state.
     public StateBuilder<TState, TEvent, TRecipient> In(TState state);
-    
+
     /// Creates a factory from using as configuration the builder.
     public StateMachineFactory<TState, TEvent, TRecipient> Finalize();
 }
@@ -398,55 +398,55 @@ public sealed class StateBuilder<TState, TEvent, TRecipient> : IFinalizable
 {
     /// Fowards call to StateMachineBuilder<TState, TEvent, TRecipient>.In(TState state).
     public StateBuilder<TState, TEvent, TRecipient> In(TState state);
-    
+
     /// Fowards call to StateMachineBuilder<TState, TEvent, TRecipient>.Finalize();
     public StateMachineFactory<TState, TEvent, TRecipient> Finalize();
-    
+
     /// Marks this state as the substate of the specified state.
     public StateBuilder<TState, TEvent, TRecipient> IsSubStateOf(TState state);
-    
+
     /// Determines an action to execute on entry to this state.
     public StateBuilder<TState, TEvent, TRecipient> OnEntry(Action action);
-    
+
     /// Same as OnEntry(Action) but pass the recipient as parameter.
     public StateBuilder<TState, TEvent, TRecipient> OnEntry(Action<TRecipient> action);
 
     /// Same as OnEntry(Action) but pass to the delegate any parameter passed during the call which matches the generic parameter type.
     /// If no parameter passed with the specified generic parameter is found, it's ignored.
     public StateBuilder<TState, TEvent, TRecipient> OnEntry<TParameter>(Action<TParameter> action);
-    
+
     /// Combined version of OnEntry(Action<TRecipient>) and OnEntry(Action<TParameter>).
     public StateBuilder<TState, TEvent, TRecipient> OnEntry<TParameter>(Action<TRecipient, TParameter> action);
-    
+
     /// Determines an action to execute on exit fropm this state.
     public StateBuilder<TState, TEvent, TRecipient> OnExit(Action action);
-    
+
     /// Same as OnExit(Action) but pass the recipient as parameter.
     public StateBuilder<TState, TEvent, TRecipient> OnExit(Action<TRecipient> action);
 
     /// Same as OnExit(Action) but pass to the delegate any parameter passed during the call which matches the generic parameter type.
     /// If no parameter passed with the specified generic parameter is found, it's ignored.
     public StateBuilder<TState, TEvent, TRecipient> OnExit<TParameter>(Action<TParameter> action);
-    
+
     /// Combined version of OnExit(Action<TRecipient>) and OnExit(Action<TParameter>).
     public StateBuilder<TState, TEvent, TRecipient> OnExit<TParameter>(Action<TRecipient, TParameter> action);
 
     /// Determines an action to execute on update to this state.
     public StateBuilder<TState, TEvent, TRecipient> OnUpdate(Action action);
-    
+
     /// Same as OnUpdate(Action) but pass the recipient as parameter.
     public StateBuilder<TState, TEvent, TRecipient> OnUpdate(Action<TRecipient> action);
 
     /// Same as OnUpdate(Action) but pass to the delegate any parameter passed during the call which matches the generic parameter type.
     public StateBuilder<TState, TEvent, TRecipient> OnUpdate<TParameter>(Action<TParameter> action);
-    
+
     /// Combined version of OnUpdate(Action<TRecipient>) and OnUpdate(Action<TParameter>).
     /// If no parameter passed with the specified generic parameter is found, it's ignored.
     public StateBuilder<TState, TEvent, TRecipient> OnUpdate<TParameter>(Action<TRecipient, TParameter> action);
-    
+
     /// Add a behaviour that is executed during the firing of the specified event.
     public TransitionBuilder<TState, TEvent, TRecipient, StateBuilder<TState, TEvent, TRecipient>> On(TEvent @event);
-    
+
     /// Ignores the specified event.
     /// If no behaviour is added to an event and it's fired, it will throw. This prevent throwing by ignoring the call at all.
     public StateBuilder<TState, TEvent, TRecipient> Ignore(TEvent @event);
@@ -458,36 +458,36 @@ public sealed class TransitionBuilder<TState, TEvent, TRecipient, TParent> : IFi
 {
     /// Add a sub transition which is executed when the delegate returns true.
     public TransitionBuilder<TState, TEvent, TRecipient, TransitionBuilder<TState, TEvent, TRecipient, TParent>> If(Func<bool> guard);
-    
+
     /// Same as If(Func<bool>) but pass the recipient as parameter.
     public TransitionBuilder<TState, TEvent, TRecipient, TransitionBuilder<TState, TEvent, TRecipient, TParent>> If(Func<TRecipient, bool> guard);
-    
+
     /// Same as If(Func<bool>)  but pass to the delegate any parameter passed during the call which matches the generic parameter type.
     public TransitionBuilder<TState, TEvent, TRecipient, TransitionBuilder<TState, TEvent, TRecipient, TParent>> If<TParameter>(Func<TParameter, bool> guard);
-    
+
     /// Combined version of If(Func<TRecipient, bool>) and If(Func<TParameter, bool>).
     public TransitionBuilder<TState, TEvent, TRecipient, TransitionBuilder<TState, TEvent, TRecipient, TParent>> If<TParameter>(Func<TParameter, bool> guard);
-    
+
     /// Determines an action to execute when the event is raised.
     public TransitionBuilder<TState, TEvent, TRecipient, TParent> Do(Action action);
-    
+
     /// Same as Do(Action) but pass the recipient as parameter.
     public TransitionBuilder<TState, TEvent, TRecipient, TParent> Do(Action<TRecipient> action);
 
     /// Same as Do(Action) but pass to the delegate any parameter passed during the call which matches the generic parameter type.
     /// If no parameter passed with the specified generic parameter is found, it's ignored.
     public TransitionBuilder<TState, TEvent, TRecipient, TParent> Do<TParameter>(Action<TParameter> action);
-    
+
     /// Combined version of Do(Action<TRecipient>) and Do(Action<TParameter>).
     public TransitionBuilder<TState, TEvent, TRecipient, TParent> Do<TParameter>(Action<TRecipient, TParameter> action);
-    
+
     /// Determines to which state this transition goes.
     public TParent Goto(TState state);
-    
+
     /// Determines to transite to the current state.
     /// That means, that OnExit and OnEntry actions of current state (but not parent states in case of current state being a substate) will be executed.
     public TParent GotoSelf();
-    
+
     /// Determines that will have no transition to any state, so no OnEntry nor OnExit event will be raised.
     public TParent StaySelf();
 }
