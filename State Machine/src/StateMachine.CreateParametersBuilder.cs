@@ -54,7 +54,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
             else
             {
                 if (stateMachine.flyweight.RunEntryActionsOfInitialState)
-                    stateMachine.RunEntryAndDisposeParameters(stateMachine.currentState, default);
+                    stateMachine.RunEntry(stateMachine.currentState, default);
                 return stateMachine;
             }
         }
