@@ -3,6 +3,7 @@
 namespace Enderlook.StateMachine;
 
 internal interface ITransitionBuilder<TState>
+    where TState : notnull
 {
     int GetTotalTransitionsAndEnsureHasTerminator();
 
