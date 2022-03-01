@@ -46,7 +46,7 @@ public class Character
             // Parameter is generic so it doesn't allocate of value types.
             // This parameter is passed to subscribed delegate which accepts the generic argument type in it's signature.
             // If you don't want to pass a parameter you can use Update().
-            // Alternatively, if you want to pass multiple parameters you can use UpdateWithParameters().With(param1).With(param2).Done().
+            // Alternatively, if you want to pass multiple parameters you can use With(param1).With(param2).Update().
             // This parameter system can also be used with fire event methods.
             character.stateMachine.UpdateWithParameter(character.rnd.NextSingle());
 
@@ -78,9 +78,9 @@ public class Character
                 .OnEntry(() => Console.WriteLine("Going to bed."))
                 // Executed every time we exit from this state.
                 .OnExit(() => Console.WriteLine("Getting up."))
-                // Executed every time update method (either Update(), UpdateWithParameter<T>(T) or UpdateWithParameters().[...].Done() is executed and is in this state.
+                // Executed every time update method (either Update(), UpdateWithParameter<T>(T) or With<T>(T).Update()) is executed and is in this state.
                 // All events provide an overload to pass a recipient, so it can be parametized during build of concrete instances.
-                // Also provides an overload to pass a parameter of arbitrary type, so it can be parametized durin call of UpdateWithParameter<T>(T) or UpdateWithParameters().With<T>(param).Done().
+                // Also provides an overload to pass a parameter of arbitrary type, so it can be parametized during call of UpdateWithParameter<T>(T) or With<T>(T).Update().
                 // Also provides an overload to pass both a recipient and a parameter of arbitrary type.
                 // This overloads also applies to OnEntry(...), OnExit(...), If(...) and Do(...) methods.
                 .OnUpdate(@this => @this.OnUpdateSleep())
@@ -264,6 +264,45 @@ We added the generic parameter `TParameter` instead of using a simple `Object` t
 - Add properties `CurrentStateHierarchy` and `CurrentAcceptedEvents`, and methods `GetParentStateOf`, `GetParentHierarchyOf`, `GetAcceptedEventsBy`, `IsInState` to `StateMachine<TState, TEvent, TRecipient>`.
 - Add proper support for recursive fire calls.
 
+## 0.4.0
+- Add following APIs:
+```diff
+public partial sealed class StateMachine<TState, TEvent, TRecipient>
+{
+-   public FireParametersBuilder FireWithParameters(TEvent @event);
+-   public FireImmediatelyParametersBuilder FireImmediatelyWithParameters(TEvent @event);
+-   public UpdateParametersBuilder UpdateWithParameters();
++   public ParametersBuilder With<T>(T parameter);
+
+-   public readonly struct FireParametersBuilder
+-   {
+-       public FireParametersBuilder With<TParameter>(TParameter parameter);
+-       public void Done();
+-   }
+
+-   public readonly struct FireImmediatelyParametersBuilder
+-   {
+-       public FireImmediatelyParametersBuilder With<TParameter>(TParameter parameter);
+-       public void Done();
+-   }
+
+-   public readonly struct UpdateParametersBuilder
+-   {
+-       public UpdateParametersBuilder With<TParameter>(TParameter parameter);
+-       public void Done();
+-   }
+
+
++   public readonly struct ParametersBuilder
++   {
++       public ParametersBuilder With<TParameter>(TParameter parameter);
++       public void Fire(TEvent);
++       public void FireImmediately(TEvent);
++       public void Update(TEvent);
++   }
+}
+```
+
 # API
 
 ```cs
@@ -303,9 +342,6 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
     /// Same as Fire(TEvent) but includes a value that can be passed to subscribed delegates.
     public void FireWithParameter<TParameter>(TEvent @event, TParameter parameter);
 
-    /// Same as Fire(TEvent) but returns a builder that can accept arbitrary amount of parameter that can be passed to subscribed delegates.
-    public FireParametersBuilder FireWithParameters(TEvent @event);
-
     /// Fire an event to the state machine.
     /// The event won't be enqueued but actually run, ignoring previously enqueued events.
     /// If subsequent events are enqueued during the execution of the callbacks of this event, they will also be run after the completion of this event.
@@ -314,43 +350,28 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
     /// Same as FireImmediately(TEvent) but includes a value that can be passed to subscribed delegates.
     public void FireImmediatelyWithParameter<TParameter>(TEvent @event, TParameter parameter);
 
-    /// Same as FireImmediately(TEvent) but returns a builder that can accept arbitrary amount of parameter that can be passed to subscribed delegates.
-    public FireImmediatelyParametersBuilder FireImmediatelyWithParameters(TEvent @event);
-
     /// Executes the update callbacks registered in the current state.
     public void Update();
 
     /// Same as Update() but includes a value that can be passed to subscribed delegates.
     public void UpdateWithParameter<TParameter>(TParameter parameter);
+    
+    /// Stores a parameter(s) that can be passed to subscribed delegates.
+    public ParametersBuilder With<T>(T parameter);
 
-    /// Same as Update() but returns a builder that can accept arbitrary amount of parameter that can be passed to subscribed delegates.
-    public UpdateParametersBuilder UpdateWithParameters();
-
-    public readonly struct FireParametersBuilder
+    public readonly struct ParametersBuilder
     {
         /// Stores a parameter tha can be passed to callbacks.
-        public FireParametersBuilder With<TParameter>(TParameter parameter);
+        public ParametersBuilder With<TParameter>(TParameter parameter);
 
-        /// Fires the event.
-        public void Done();
-    }
-
-    public readonly struct FireImmediatelyParametersBuilder
-    {
-        /// Stores a parameter tha can be passed to callbacks.
-        public FireImmediatelyParametersBuilder With<TParameter>(TParameter parameter);
-
-        /// Fires the event.
-        public void Done();
-    }
-
-    public readonly struct UpdateParametersBuilder
-    {
-        /// Stores a parameter tha can be passed to callbacks.
-        public UpdateParametersBuilder With<TParameter>(TParameter parameter);
-
-        /// Executes the update.
-        public void Done();
+        /// Same as Fire(TEvent) in parent class but includes all the stored value that can be passed to subscribed delegates.
+        public void Fire(TEvent);
+        
+        /// Same as FireImmediately(TEvent) in parent class but includes all the stored value that can be passed to subscribed delegates.
+        public void FireImmediately(TEvent);
+        
+        /// Same as Update(TEvent) in parent class but includes all the stored value that can be passed to subscribed delegates.
+        public void Update(TEvent);
     }
 
     public readonly struct CreateParametersBuilder
