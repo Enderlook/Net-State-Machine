@@ -30,31 +30,31 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     private int parameterBuilderFirstIndex = -1;
     private int parameterBuilderVersion;
 
-    internal StateMachine(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient, int currentState)
+    internal StateMachine(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient)
     {
         this.flyweight = flyweight;
         this.recipient = recipient;
-        this.currentState = currentState;
+        currentState = flyweight.InitialState;
     }
 
-    internal static StateMachine<TState, TEvent, TRecipient> From(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient, int currentState)
+    internal static StateMachine<TState, TEvent, TRecipient> From(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient)
     {
-        StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient, currentState);
+        StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient);
         if (flyweight.RunEntryActionsOfInitialState)
-            stateMachine.RunEntry(currentState, default);
+            stateMachine.RunEntry(flyweight.InitialState, default);
         return stateMachine;
     }
 
-    internal static StateMachine<TState, TEvent, TRecipient> FromWithParameter<TParameter>(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient, int currentState, TParameter parameter)
+    internal static StateMachine<TState, TEvent, TRecipient> FromWithParameter<TParameter>(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient, TParameter parameter)
     {
-        StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient, currentState);
+        StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient);
         if (flyweight.RunEntryActionsOfInitialState)
-            stateMachine.RunEntryAndDisposeParameters(currentState, stateMachine.parameterIndexes.GetEnumeratorStartingAt(stateMachine.StoreParameter(parameter)));
+            stateMachine.RunEntryAndDisposeParameters(flyweight.InitialState, stateMachine.parameterIndexes.GetEnumeratorStartingAt(stateMachine.StoreParameter(parameter)));
         return stateMachine;
     }
 
-    internal static CreateParametersBuilder FromWithParameters(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient, int currentState)
-        => new(new(flyweight, recipient, currentState));
+    internal static CreateParametersBuilder FromWithParameters(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient)
+        => new(new(flyweight, recipient));
 
     /// <summary>
     /// Returns the current (possibly sub) state of this state machine.

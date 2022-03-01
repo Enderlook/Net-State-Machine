@@ -50,7 +50,7 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
     /// <returns>New <see cref="StateMachine{TState, TEvent, TRecipient}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient)
-        => StateMachine<TState, TEvent, TRecipient>.From(this, recipient, InitialState);
+        => StateMachine<TState, TEvent, TRecipient>.From(this, recipient);
 
     /// <summary>
     /// Creates a configured and initialized <see cref="StateMachine{TState, TEvent, TRecipient}"/> using the configuration provided by this factory.<br/>
@@ -62,7 +62,7 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
     /// <returns>New <see cref="StateMachine{TState, TEvent, TRecipient}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public StateMachine<TState, TEvent, TRecipient> CreateWithParameter<TParameter>(TRecipient recipient, TParameter parameter)
-        => StateMachine<TState, TEvent, TRecipient>.FromWithParameter(this, recipient, InitialState, parameter);
+        => StateMachine<TState, TEvent, TRecipient>.FromWithParameter(this, recipient, parameter);
 
     /// <summary>
     /// Creates a configured and initialized <see cref="StateMachine{TState, TEvent, TRecipient}"/> using the configuration provided by this factory.<br/>
@@ -72,7 +72,7 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
     /// <returns>Parameters builder of this instantiation.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient)
-        => StateMachine<TState, TEvent, TRecipient>.FromWithParameters(this, recipient, InitialState);
+        => StateMachine<TState, TEvent, TRecipient>.FromWithParameters(this, recipient);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ParentStateOf(TState state, [NotNullWhen(true)] out TState? parentState)
