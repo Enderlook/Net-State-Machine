@@ -45,10 +45,9 @@ public class Character
             // Executes an update call of the state machine and pass an arbitrary parameter to it.
             // Parameter is generic so it doesn't allocate of value types.
             // This parameter is passed to subscribed delegate which accepts the generic argument type in it's signature.
-            // If you don't want to pass a parameter you can use Update().
-            // Alternatively, if you want to pass multiple parameters you can use With(param1).With(param2).Update().
+            // If you don't want to pass a parameter you can remove the .With() method call.
             // This parameter system can also be used with fire event methods.
-            character.stateMachine.UpdateWithParameter(character.rnd.NextSingle());
+            character.stateMachine.With(character.rnd.NextSingle()).Update();
 
             Console.WriteLine($"State: {character.stateMachine.CurrentState}.");
             Console.WriteLine($"Health: {character.health}.");
@@ -78,9 +77,9 @@ public class Character
                 .OnEntry(() => Console.WriteLine("Going to bed."))
                 // Executed every time we exit from this state.
                 .OnExit(() => Console.WriteLine("Getting up."))
-                // Executed every time update method (either Update(), UpdateWithParameter<T>(T) or With<T>(T).Update()) is executed and is in this state.
+                // Executed every time update method (either Update() or With<T>(T).Update()) is executed and is in this state.
                 // All events provide an overload to pass a recipient, so it can be parametized during build of concrete instances.
-                // Also provides an overload to pass a parameter of arbitrary type, so it can be parametized during call of UpdateWithParameter<T>(T) or With<T>(T).Update().
+                // Also provides an overload to pass a parameter of arbitrary type, so it can be parametized during call of With<T>(T).Update().
                 // Also provides an overload to pass both a recipient and a parameter of arbitrary type.
                 // This overloads also applies to OnEntry(...), OnExit(...), If(...) and Do(...) methods.
                 .OnUpdate(@this => @this.OnUpdateSleep())
@@ -269,8 +268,11 @@ We added the generic parameter `TParameter` instead of using a simple `Object` t
 ```diff
 public partial sealed class StateMachine<TState, TEvent, TRecipient>
 {
+-   public void FireWithParameter<TParameter>(TEvent @event, TParameter parameter);
 -   public FireParametersBuilder FireWithParameters(TEvent @event);
 -   public FireImmediatelyParametersBuilder FireImmediatelyWithParameters(TEvent @event);
+-   public void FireImmediatelyWithParameter<TParameter>(TEvent @event, TParameter parameter);
+-   public void UpdateWithParameter<TParameter>(TParameter parameter);
 -   public UpdateParametersBuilder UpdateWithParameters();
 +   public ParametersBuilder With<T>(T parameter);
 
@@ -309,6 +311,7 @@ public partial sealed class StateMachine<TState, TEvent, TRecipient>
 
 public sealed class StateMachineFactory<TState, TEvent, TRecipient>
 {
+-   public StateMachine<TState, TEvent, TRecipient> CreateWithParameter<TParameter>(TRecipient recipient, TParameter parameter);    
 -   public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient);
 
 +   public ParametersBuilder With<T>(T parameter);
@@ -357,22 +360,13 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
     /// If the state machine is already firing an state, it's enqueued to run after completion of the current event.
     public void Fire(TEvent @event);
 
-    /// Same as Fire(TEvent) but includes a value that can be passed to subscribed delegates.
-    public void FireWithParameter<TParameter>(TEvent @event, TParameter parameter);
-
     /// Fire an event to the state machine.
     /// The event won't be enqueued but actually run, ignoring previously enqueued events.
     /// If subsequent events are enqueued during the execution of the callbacks of this event, they will also be run after the completion of this event.
     public void FireImmediately(TEvent @event);
 
-    /// Same as FireImmediately(TEvent) but includes a value that can be passed to subscribed delegates.
-    public void FireImmediatelyWithParameter<TParameter>(TEvent @event, TParameter parameter);
-
     /// Executes the update callbacks registered in the current state.
     public void Update();
-
-    /// Same as Update() but includes a value that can be passed to subscribed delegates.
-    public void UpdateWithParameter<TParameter>(TParameter parameter);
     
     /// Stores a parameter(s) that can be passed to subscribed delegates.
     public ParametersBuilder With<T>(T parameter);
@@ -399,9 +393,6 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
 {
     /// Creates a configured and initialized state machine using the configuration provided by this factory.
     public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
-
-    /// Same as Create() but includes a value that can be passed to subscribed delegates.
-    public StateMachine<TState, TEvent, TRecipient> CreateWithParameter<TParameter>(TRecipient recipient, TParameter parameter);
     
     /// Stores a parameter(s) that can be passed to subscribed delegates.
     public ParametersBuilder With<T>(T parameter);

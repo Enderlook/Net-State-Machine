@@ -52,14 +52,6 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         return stateMachine;
     }
 
-    internal static StateMachine<TState, TEvent, TRecipient> FromWithParameter<TParameter>(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient, TParameter parameter)
-    {
-        StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient);
-        if (flyweight.RunEntryActionsOfInitialState)
-            stateMachine.RunEntryAndDisposeParameters(flyweight.InitialState, stateMachine.parameterIndexes.GetEnumeratorStartingAt(stateMachine.StoreFirstParameter(parameter)));
-        return stateMachine;
-    }
-
     /// <summary>
     /// Returns the current (possibly sub) state of this state machine.
     /// </summary>
@@ -199,23 +191,6 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
 
     /// <summary>
     /// Fire an event to the state machine.<br/>
-    /// If the state machine is already firing an state, it's enqueued to run after completion of the current event.
-    /// </summary>
-    /// <typeparam name="TParameter">Type of parameter.</typeparam>
-    /// <param name="event">Event to fire.</param>
-    /// <param name="parameter">Parameter that can be passed to callbacks.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="event"/> is <see langword="null"/>.</exception>
-    /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void FireWithParameter<TParameter>(TEvent @event, TParameter parameter)
-    {
-        if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
-        if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
-        EnqueueAndRunIfNotRunning(@event, StoreFirstParameter(parameter));
-    }
-
-    /// <summary>
-    /// Fire an event to the state machine.<br/>
     /// The event won't be enqueued but actually run, ignoring previously enqueued events.<br/>
     /// If subsequent events are enqueued during the execution of the callbacks of this event, they will also be run after the completion of this event.
     /// </summary>
@@ -231,24 +206,6 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     }
 
     /// <summary>
-    /// Fire an event to the state machine.<br/>
-    /// The event won't be enqueued but actually run, ignoring previously enqueued events.<br/>
-    /// If subsequent events are enqueued during the execution of the callbacks of this event, they will also be run after the completion of this event.
-    /// </summary>
-    /// <typeparam name="TParameter">Type of parameter.</typeparam>
-    /// <param name="event">Event to fire.</param>
-    /// <param name="parameter">Parameter that can be passed to callbacks.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="event"/> is <see langword="null"/>.</exception>
-    /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void FireImmediatelyWithParameter<TParameter>(TEvent @event, TParameter parameter)
-    {
-        if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
-        if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
-        EnqueueAndRun(@event, StoreFirstParameter(parameter));
-    }
-
-    /// <summary>
     /// Executes the update callbacks registered in the current state.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
@@ -257,20 +214,6 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     {
         if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
         RunUpdate(currentState, default);
-    }
-
-    /// <summary>
-    /// Executes the update callbacks registered in the current state.
-    /// </summary>
-    /// <typeparam name="TParameter">Type of parameter.</typeparam>
-    /// <param name="parameter">Parameter that can be passed to callbacks.</param>
-    /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UpdateWithParameter<TParameter>(TParameter parameter)
-    {
-        if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
-        int parametersStartIndex = StoreFirstParameter(parameter);
-        Update(parametersStartIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
