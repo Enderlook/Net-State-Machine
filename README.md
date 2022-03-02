@@ -292,6 +292,11 @@ public partial sealed class StateMachine<TState, TEvent, TRecipient>
 -       public void Done();
 -   }
 
+-   public readonly struct CreateParametersBuilder
+-   {
+-       public CreateParametersBuilder With<TParameter>(TParameter parameter);
+-       public StateMachine<TState, TEvent, TRecipient> Done();
+-   }
 
 +   public readonly struct ParametersBuilder
 +   {
@@ -299,6 +304,19 @@ public partial sealed class StateMachine<TState, TEvent, TRecipient>
 +       public void Fire(TEvent);
 +       public void FireImmediately(TEvent);
 +       public void Update(TEvent);
++   }
+}
+
+public sealed class StateMachineFactory<TState, TEvent, TRecipient>
+{
+-   public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient);
+
++   public ParametersBuilder With<T>(T parameter);
+
++   public readonly struct ParametersBuilder
++   {
++       public ParametersBuilder With<TParameter>(TParameter parameter);
++       public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
 +   }
 }
 ```
@@ -373,15 +391,6 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
         /// Same as Update(TEvent) in parent class but includes all the stored value that can be passed to subscribed delegates.
         public void Update(TEvent);
     }
-
-    public readonly struct CreateParametersBuilder
-    {
-        /// Stores a parameter tha can be passed to callbacks.
-        public CreateParametersBuilder With<TParameter>(TParameter parameter);
-
-        /// Inialized the state machine.
-        public StateMachine<TState, TEvent, TRecipient> Done();
-    }
 }
 
 public sealed class StateMachineFactory<TState, TEvent, TRecipient>
@@ -393,9 +402,18 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
 
     /// Same as Create() but includes a value that can be passed to subscribed delegates.
     public StateMachine<TState, TEvent, TRecipient> CreateWithParameter<TParameter>(TRecipient recipient, TParameter parameter);
+    
+    /// Stores a parameter(s) that can be passed to subscribed delegates.
+    public ParametersBuilder With<T>(T parameter);
 
-    /// Same as Create() but returns a builder that can accept arbitrary amount of parameter that can be passed to subscribed delegates.
-    public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient);
+    public readonly struct ParametersBuilder
+    {
+        /// Stores a parameter tha can be passed to callbacks.
+        public ParametersBuilder With<TParameter>(TParameter parameter);
+
+        /// Creates the state machine.
+        public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
+    }
 }
 
 public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizable

@@ -18,7 +18,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
 {
     private readonly StateMachineFactory<TState, TEvent, TRecipient> flyweight;
 
-    private readonly TRecipient recipient;
+    private TRecipient recipient;
 
     private int currentState;
 
@@ -37,6 +37,13 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         currentState = flyweight.InitialState;
     }
 
+    internal StateMachine(StateMachineFactory<TState, TEvent, TRecipient> flyweight)
+    {
+        this.flyweight = flyweight;
+        currentState = flyweight.InitialState;
+        recipient = default!;
+    }
+
     internal static StateMachine<TState, TEvent, TRecipient> From(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient)
     {
         StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient);
@@ -49,12 +56,9 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     {
         StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient);
         if (flyweight.RunEntryActionsOfInitialState)
-            stateMachine.RunEntryAndDisposeParameters(flyweight.InitialState, stateMachine.parameterIndexes.GetEnumeratorStartingAt(stateMachine.StoreParameter(parameter)));
+            stateMachine.RunEntryAndDisposeParameters(flyweight.InitialState, stateMachine.parameterIndexes.GetEnumeratorStartingAt(stateMachine.StoreFirstParameter(parameter)));
         return stateMachine;
     }
-
-    internal static CreateParametersBuilder FromWithParameters(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient)
-        => new(new(flyweight, recipient));
 
     /// <summary>
     /// Returns the current (possibly sub) state of this state machine.
@@ -207,7 +211,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     {
         if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
         if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
-        EnqueueAndRunIfNotRunning(@event, StoreParameter(parameter));
+        EnqueueAndRunIfNotRunning(@event, StoreFirstParameter(parameter));
     }
 
     /// <summary>
@@ -241,7 +245,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     {
         if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
         if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
-        EnqueueAndRun(@event, StoreParameter(parameter));
+        EnqueueAndRun(@event, StoreFirstParameter(parameter));
     }
 
     /// <summary>
@@ -265,7 +269,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     public void UpdateWithParameter<TParameter>(TParameter parameter)
     {
         if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
-        int parametersStartIndex = StoreParameter(parameter);
+        int parametersStartIndex = StoreFirstParameter(parameter);
         Update(parametersStartIndex);
     }
 
@@ -366,6 +370,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
 
             TransitionEventUnion[] transitionEvents = flyweight.TransitionEvents;
             StateEventUnion[] stateEvents = flyweight.StateEvents;
+            TRecipient recipient = this.recipient;
             while (true)
             {
                 TransitionEventUnion transitionEventUnion = transitionEvents[transitionIndex];
@@ -429,6 +434,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
             int index = state.OnEntryStart;
             int to = index + state.onEntryLength;
             StateEventUnion[] stateEvents = flyweight.StateEvents;
+            TRecipient recipient = this.recipient;
             for (; index < to; index++)
                 stateEvents[index].Invoke(recipient, parametersEnumerator);
         }
@@ -460,13 +466,14 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
             int index = state.OnUpdateStart;
             int to = index + state.onUpdateLength;
             StateEventUnion[] stateEvents = flyweight.StateEvents;
+            TRecipient recipient = this.recipient;
             for (; index < to; index++)
                 stateEvents[index].Invoke(recipient, parametersEnumerator);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int StoreParameter<TParameter>(TParameter parameter)
+    internal int StoreFirstParameter<TParameter>(TParameter parameter)
     {
         if (!parameters.TryGetValue(typeof(TParameter), out ParameterSlots? container))
             parameters.Add(typeof(TParameter), container = new ParameterSlots<TParameter>());
@@ -491,5 +498,17 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         if (parameterIndex == -1)
             return;
         parameterIndexes.RemoveFrom(parameterIndex);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Initialize(TRecipient recipient)
+    {
+        this.recipient = recipient;
+        int index = parameterBuilderFirstIndex;
+        parameterBuilderFirstIndex = -1;
+        if (flyweight.RunEntryActionsOfInitialState)
+            RunEntryAndDisposeParameters(currentState, parameterIndexes.GetEnumeratorStartingAt(index));
+        else
+            RemoveParameters(index);
     }
 }

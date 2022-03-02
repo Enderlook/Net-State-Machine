@@ -12,7 +12,7 @@ namespace Enderlook.StateMachine;
 /// <typeparam name="TState">Type that determines states.</typeparam>
 /// <typeparam name="TEvent">Type that determines events.</typeparam>
 /// <typeparam name="TRecipient">Type that determines internal data that can be acceded by actions.</typeparam>
-public sealed class StateMachineFactory<TState, TEvent, TRecipient>
+public sealed partial class StateMachineFactory<TState, TEvent, TRecipient>
     where TState : notnull
     where TEvent : notnull
 {
@@ -63,16 +63,6 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public StateMachine<TState, TEvent, TRecipient> CreateWithParameter<TParameter>(TRecipient recipient, TParameter parameter)
         => StateMachine<TState, TEvent, TRecipient>.FromWithParameter(this, recipient, parameter);
-
-    /// <summary>
-    /// Creates a configured and initialized <see cref="StateMachine{TState, TEvent, TRecipient}"/> using the configuration provided by this factory.<br/>
-    /// This method is thread-safe.
-    /// </summary>
-    /// <param name="recipient">Recipient for the new created <see cref="StateMachine{TState, TEvent, TRecipient}"/>.</param>
-    /// <returns>Parameters builder of this instantiation.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient)
-        => StateMachine<TState, TEvent, TRecipient>.FromWithParameters(this, recipient);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ParentStateOf(TState state, [NotNullWhen(true)] out TState? parentState)

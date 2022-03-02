@@ -17,13 +17,18 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     {
         if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
         int parameterBuilderVersion = ++this.parameterBuilderVersion;
+        parameterBuilderFirstIndex = StoreFirstParameter(parameter);
+        return new(this, parameterBuilderVersion);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void StoreParameter<TParameter>(TParameter parameter)
+    {
         if (!parameters.TryGetValue(typeof(TParameter), out ParameterSlots? container))
             parameters.Add(typeof(TParameter), container = new ParameterSlots<TParameter>());
         Debug.Assert(container is ParameterSlots<TParameter>);
         int index = Unsafe.As<ParameterSlots<TParameter>>(container).Store(parameter, false);
-        ParameterSlot slot = new(container, index);
-        parameterBuilderFirstIndex = parameterIndexes.StoreLast(slot, false);
-        return new(this, parameterBuilderVersion);
+        parameterIndexes.StoreLast(new(container, index), true);
     }
 
     /// <summary>
@@ -50,12 +55,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         public ParametersBuilder With<TParameter>(TParameter parameter)
         {
             if (stateMachine.parameterBuilderVersion != parameterBuilderVersion) ThrowHelper.ThrowInvalidOperationException_ParameterBuilderWasFinalized();
-            if (!stateMachine.parameters.TryGetValue(typeof(TParameter), out ParameterSlots? container))
-                stateMachine.parameters.Add(typeof(TParameter), container = new ParameterSlots<TParameter>());
-            Debug.Assert(container is ParameterSlots<TParameter>);
-            int index = Unsafe.As<ParameterSlots<TParameter>>(container).Store(parameter, false);
-            ParameterSlot slot = new(container, index);
-            stateMachine.parameterIndexes.StoreLast(slot, true);
+            stateMachine.StoreParameter(parameter);
             return this;
         }
 
