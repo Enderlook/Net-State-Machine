@@ -47,8 +47,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     internal static StateMachine<TState, TEvent, TRecipient> From(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient)
     {
         StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient);
-        if (flyweight.RunEntryActionsOfInitialState)
-            stateMachine.RunEntry(flyweight.InitialState, default);
+        stateMachine.RunInitialStateEntry(default);
         return stateMachine;
     }
 
@@ -312,7 +311,6 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
                 ThrowHelper.ThrowInvalidOperationException_EventNotRegisterForState(states[currentState].state, @event);
 
             TransitionEventUnion[] transitionEvents = flyweight.TransitionEvents;
-            StateEventUnion[] stateEvents = flyweight.StateEvents;
             TRecipient recipient = this.recipient;
             while (true)
             {
@@ -327,23 +325,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
                         transitionIndex = value.Index;
                         continue;
                     case TransitionResult.GoTo:
-                        int stateIndex = currentState;
-                        State<TState> state;
-                        do
-                        {
-                            state = states[stateIndex];
-                            if (state.onExitLength != -1)
-                            {
-                                int index = state.OnExitStart;
-                                int to = index + state.onExitLength;
-                                for (; index < to; index++)
-                                    stateEvents[index].Invoke(recipient, parametersEnumerator);
-                            }
-                        } while (state.TryGetParentState(out stateIndex));
-
                         this.currentState = value.Index;
-
-                        RunEntry(value.Index, parametersEnumerator);
                         goto outside;
                     case TransitionResult.StaySelf:
                         goto outside;
@@ -359,28 +341,19 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RunEntryAndDisposeParameters(int currentState, SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
+    private void RunInitialStateEntry(SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
     {
-        RunEntry(currentState, parametersEnumerator);
-        Debug.Assert(parametersEnumerator.Has);
-        parameterIndexes.RemoveFrom(parametersEnumerator.CurrentIndex);
+        StateEventUnion[] stateEvents = flyweight.StateEvents;
+        for (int i = flyweight.InitialStateOnEntryStart; i < stateEvents.Length; i++)
+            stateEvents[i].Invoke(recipient, parametersEnumerator);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RunEntry(int stateIndex, SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
+    private void RunInitialStateEntryAndDisposeParameters(SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
     {
-        State<TState> state = flyweight.States[stateIndex];
-        if (state.TryGetParentState(out int parentState))
-            RunEntry(parentState, parametersEnumerator);
-        if (state.onEntryLength != 0)
-        {
-            int index = state.OnEntryStart;
-            int to = index + state.onEntryLength;
-            StateEventUnion[] stateEvents = flyweight.StateEvents;
-            TRecipient recipient = this.recipient;
-            for (; index < to; index++)
-                stateEvents[index].Invoke(recipient, parametersEnumerator);
-        }
+        RunInitialStateEntry( parametersEnumerator);
+        Debug.Assert(parametersEnumerator.Has);
+        parameterIndexes.RemoveFrom(parametersEnumerator.CurrentIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -406,7 +379,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
             RunUpdate(parentState, parametersEnumerator);
         if (state.onUpdateLength != 0)
         {
-            int index = state.OnUpdateStart;
+            int index = state.onUpdateStart;
             int to = index + state.onUpdateLength;
             StateEventUnion[] stateEvents = flyweight.StateEvents;
             TRecipient recipient = this.recipient;
@@ -449,9 +422,10 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         this.recipient = recipient;
         int index = parameterBuilderFirstIndex;
         parameterBuilderFirstIndex = -1;
-        if (flyweight.RunEntryActionsOfInitialState)
-            RunEntryAndDisposeParameters(currentState, parameterIndexes.GetEnumeratorStartingAt(index));
-        else
-            RemoveParameters(index);
+        SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator = parameterIndexes.GetEnumeratorStartingAt(index);
+        StateEventUnion[] stateEvents = flyweight.StateEvents;
+        for (int i = flyweight.InitialStateOnEntryStart; i < stateEvents.Length; i++)
+            stateEvents[i].Invoke(recipient, parametersEnumerator);
+        RemoveParameters(index);
     }
 }

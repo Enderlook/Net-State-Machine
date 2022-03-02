@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Enderlook.StateMachine;
 
@@ -10,7 +11,7 @@ namespace Enderlook.StateMachine;
 /// <typeparam name="TState">Type that determines states.</typeparam>
 /// <typeparam name="TEvent">Type that determines events.</typeparam>
 /// <typeparam name="TRecipient">Type that determines internal data that can be acceded by actions.</typeparam>
-public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizable
+public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
     where TState : notnull
     where TEvent : notnull
 {
@@ -18,8 +19,6 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizab
     private bool hasInitialState;
     private TState? initialState;
     private bool runEntryActionsOfInitialState;
-
-    bool IFinalizable.HasFinalized => HasFinalized;
 
     internal bool HasFinalized { get; private set; }
 
@@ -81,13 +80,27 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizab
         int statesCount = this.states.Count;
         if (statesCount == 0) ThrowHelper.ThrowInvalidOperationException_DoesNotHaveRegisteredStates();
 
+        EqualityComparer<TState> stateEqualityComparer;
+        if (typeof(TState).IsValueType)
+        {
+#if NET5_0_OR_GREATER
+            Unsafe.SkipInit(out stateEqualityComparer);
+#else
+            stateEqualityComparer = default!;
+#endif
+        }
+        else
+            stateEqualityComparer = EqualityComparer<TState>.Default;
+
         foreach (KeyValuePair<TState, StateBuilder<TState, TEvent, TRecipient>> kv in this.states)
         {
             TState origin = kv.Key;
             StateBuilder<TState, TEvent, TRecipient> current = kv.Value;
             while (current.IsSubState(out TState? state))
             {
-                if (EqualityComparer<TState>.Default.Equals(state, origin))
+                if (typeof(TState).IsValueType ?
+                    EqualityComparer<TState>.Default.Equals(state, origin) :
+                    stateEqualityComparer.Equals(state, origin))
                     ThrowHelper.ThrowInvalidOperationException_CircularReferenceOfSubstates();
                 if (!this.states.TryGetValue(state, out StateBuilder<TState, TEvent, TRecipient>? newBuilder))
                     ThrowHelper.ThrowInvalidOperationException_StateIsSubStateOfANotRegisteredState();
@@ -101,7 +114,19 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizab
         int stateEventsCount = 0;
         int transitionsCount = 0;
         foreach (KeyValuePair<TState, StateBuilder<TState, TEvent, TRecipient>> kv in this.states)
-            kv.Value.PrepareAndCheck(statesMap, ref i, ref transitionEventsCount, ref stateEventsCount, ref transitionsCount);
+            kv.Value.PrepareAndCheck(this.states, statesMap, ref i, ref transitionEventsCount, ref stateEventsCount, ref transitionsCount);
+
+        if (runEntryActionsOfInitialState)
+        {
+            StateBuilder<TState, TEvent, TRecipient> stateBuilder = this.states[initialState];
+            while (true)
+            {
+                stateEventsCount += stateBuilder.OnEntryCount;
+                if (!stateBuilder.IsSubState(out TState? state))
+                    break;
+                stateBuilder = this.states[state];
+            }
+        }
 
         State<TState>[] states = new State<TState>[statesCount];
         StateEventUnion[] stateEvents = new StateEventUnion[stateEventsCount];
@@ -113,10 +138,23 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizab
         int iTransitionEvents = 0;
         // Don't use .Value because it allocates more memory.
         foreach (KeyValuePair<TState, StateBuilder<TState, TEvent, TRecipient>> kv in this.states)
-            kv.Value.Save(statesMap, states, stateEvents, transitionEvents, transitionStartIndexes, ref iStates, ref iStateEvents, ref iTransitionEvents);
+            kv.Value.Save(this.states, statesMap, states, stateEvents, transitionEvents, transitionStartIndexes, ref iStates, ref iStateEvents, ref iTransitionEvents);
 
         Debug.Assert(transitionStartIndexes.Count == transitionsCount);
 
-        return new StateMachineFactory<TState, TEvent, TRecipient>(states, stateEvents, transitionEvents, transitionStartIndexes, statesMap[initialState], runEntryActionsOfInitialState);
+        int initialStateOnEntryStart = iStateEvents;
+        if (runEntryActionsOfInitialState)
+        {
+            Traverse(this.states[initialState], ref iStateEvents);
+
+            void Traverse(StateBuilder<TState, TEvent, TRecipient> stateBuilder, ref int iStateEvents)
+            {
+                if (stateBuilder.IsSubState(out TState? state))
+                    Traverse(this.states[state], ref iStateEvents);
+                stateBuilder.CopyOnEntryTo(stateEvents, ref iStateEvents);
+            }
+        }
+
+        return new StateMachineFactory<TState, TEvent, TRecipient>(states, stateEvents, transitionEvents, transitionStartIndexes, statesMap[initialState], initialStateOnEntryStart);
     }
 }

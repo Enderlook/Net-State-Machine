@@ -12,7 +12,7 @@ namespace Enderlook.StateMachine;
 /// <typeparam name="TState">Type that determines states.</typeparam>
 /// <typeparam name="TEvent">Type that determines events.</typeparam>
 /// <typeparam name="TRecipient">Type that determines internal data that can be acceded by actions.</typeparam>
-public sealed class StateBuilder<TState, TEvent, TRecipient> : IFinalizable
+public sealed class StateBuilder<TState, TEvent, TRecipient> : IStateMachineBuilderReacher<TState, TEvent, TRecipient>
     where TState : notnull
     where TEvent : notnull
 {
@@ -25,14 +25,12 @@ public sealed class StateBuilder<TState, TEvent, TRecipient> : IFinalizable
     private TState? subStateOf;
     private bool isSubState;
 
-    bool IFinalizable.HasFinalized
-    {
-        get
-        {
-            Debug.Assert(parent is IFinalizable);
-            return Unsafe.As<IFinalizable>(parent).HasFinalized;
-        }
-    }
+    StateMachineBuilder<TState, TEvent, TRecipient> IStateMachineBuilderReacher<TState, TEvent, TRecipient>.StateMachineBuilder
+        => parent;
+
+    internal int OnEntryCount => onEntry?.Count ?? 0;
+
+    internal int OnExitCount => onExit?.Count ?? 0;
 
     internal StateBuilder(StateMachineBuilder<TState, TEvent, TRecipient> parent, TState state)
     {
@@ -304,19 +302,19 @@ public sealed class StateBuilder<TState, TEvent, TRecipient> : IFinalizable
         return false;
     }
 
-    internal void PrepareAndCheck(Dictionary<TState, int> statesMap, ref int i, ref int transitionEventsCount, ref int stateEventsCount, ref int transitionsCount)
+    internal void PrepareAndCheck(Dictionary<TState, StateBuilder<TState, TEvent, TRecipient>> states, Dictionary<TState, int> statesMap, ref int i, ref int transitionEventsCount, ref int stateEventsCount, ref int transitionsCount)
     {
         statesMap.Add(state, i++);
-        stateEventsCount += (onEntry?.Count ?? 0) + (onExit?.Count ?? 0) + (onUpdate?.Count ?? 0);
+        stateEventsCount += onUpdate?.Count ?? 0;
         transitionsCount += transitions.Count;
         // Don't use .Value because it allocates more memory.
         foreach (KeyValuePair<TEvent, TransitionBuilder<TState, TEvent, TRecipient, StateBuilder<TState, TEvent, TRecipient>>> kv in transitions)
-            transitionEventsCount += kv.Value.GetTotalTransitionsAndEnsureHasTerminator();
+            transitionEventsCount += kv.Value.GetTotalTransitionsAndValidate(states);
     }
 
-    internal void Save(Dictionary<TState, int> statesMap, State<TState>[] states, StateEventUnion[] stateEvents, TransitionEventUnion[] transitionEvents, Dictionary<(int State, TEvent Event), int> transitionStartIndexes, ref int iStates, ref int iStateEvents, ref int iTransitionEvents)
+    internal void Save(Dictionary<TState, StateBuilder<TState, TEvent, TRecipient>> stateBuilders, Dictionary<TState, int> statesMap, State<TState>[] states, StateEventUnion[] stateEvents, TransitionEventUnion[] transitionEvents, Dictionary<(int State, TEvent Event), int> transitionStartIndexes, ref int iStates, ref int iStateEvents, ref int iTransitionEvents)
     {
-        int onEventsStart = iStateEvents;
+        int onUpdateStart = iStateEvents;
 
         int onUpdateLength;
         if (onUpdate is List<StateEventUnion> onUpdate_)
@@ -328,40 +326,34 @@ public sealed class StateBuilder<TState, TEvent, TRecipient> : IFinalizable
         else
             onUpdateLength = 0;
 
-        int onEntryLength;
-        if (onEntry is List<StateEventUnion> onEntry_)
-        {
-            onEntryLength = onEntry_.Count;
-            onEntry_.CopyTo(0, stateEvents, iStateEvents, onEntryLength);
-            iStateEvents += onEntryLength;
-        }
-        else
-            onEntryLength = 0;
-
-        int onExitLength;
-        if (onExit is List<StateEventUnion> onExit_)
-        {
-            onExitLength = onExit_.Count;
-            onExit_.CopyTo(0, stateEvents, iStateEvents, onExitLength);
-            iStateEvents += onExitLength;
-        }
-        else
-            onExitLength = 0;
-
         int iState = iStates;
         Debug.Assert(iState == statesMap[state]);
         if (isSubState)
         {
             Debug.Assert(subStateOf is not null);
-            states[iStates++] = new State<TState>(state, statesMap[subStateOf], onEventsStart, onUpdateLength, onEntryLength, onExitLength);
+            states[iStates++] = new State<TState>(state, statesMap[subStateOf], onUpdateStart, onUpdateLength);
         }
         else
-            states[iStates++] = new State<TState>(state, -1, onEventsStart, onUpdateLength, onEntryLength, onExitLength);
+            states[iStates++] = new State<TState>(state, -1, onUpdateStart, onUpdateLength);
 
         foreach (KeyValuePair<TEvent, TransitionBuilder<TState, TEvent, TRecipient, StateBuilder<TState, TEvent, TRecipient>>> transition in transitions)
         {
             transitionStartIndexes.Add((iState, transition.Key), iTransitionEvents);
-            transition.Value.Save(statesMap, statesMap[state], transitionEvents, ref iTransitionEvents);
+            transition.Value.Save(stateBuilders, statesMap, statesMap[state], this, transitionEvents, ref iTransitionEvents);
+        }
+    }
+
+    internal List<StateEventUnion>.Enumerator? GetOnEntryEnumerator() => onEntry?.GetEnumerator();
+
+    internal List<StateEventUnion>.Enumerator? GetOnExitEnumerator() => onExit?.GetEnumerator();
+
+    internal void CopyOnEntryTo(StateEventUnion[] stateEvents, ref int iStateEvents)
+    {
+        if (onEntry is List<StateEventUnion> onEntry_)
+        {
+            int onEntryLength = onEntry.Count;
+            onEntry_.CopyTo(0, stateEvents, iStateEvents, onEntryLength);
+            iStateEvents += onEntryLength;
         }
     }
 }

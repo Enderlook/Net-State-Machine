@@ -322,6 +322,35 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
 +       public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
 +   }
 }
+
+public sealed partial class TransitionBuilder<TState, TEvent, TRecipient, TParent> : IFinalizable, ITransitionBuilder<TState>
+{
+-   public TParent GotoSelf();
++   public TParent GotoSelf(bool runEntryActions);
++   public GotoBuilder<TState, TEvent, TRecipient, TParent> OnEntryPolicy(TransitionPolicy policy);
++   public GotoBuilder<TState, TEvent, TRecipient, TParent> OnExitPolicy(TransitionPolicy policy);
+}
+
++public sealed class GotoBuilder<TState, TEvent, TRecipient, TParent> : IGoto<TState>
++   where TState : notnull
++   where TEvent : notnull
++{
++   public GotoBuilder<TState, TEvent, TRecipient, TParent> OnEntryPolicy(TransitionPolicy policy);
++   public GotoBuilder<TState, TEvent, TRecipient, TParent> OnExitPolicy(TransitionPolicy policy);
++   public TParent Goto(TState state);
++   public TParent GotoSelf();
++}
+
++public enum TransitionPolicy
++{
++   Ignore = 0,
++   ParentFirst = 1,
++   ChildFirst = 2,
++   ParentFirstWithCulling = 3,
++   ChildFirstWithCulling = 4,
++   ParentFirstWithCullingInclusive = 5,
++   ChildFirstWithCullingInclusive = 6,
++}
 ```
 - Fix error message when transition is not found in current state.
 
@@ -512,14 +541,74 @@ public sealed class TransitionBuilder<TState, TEvent, TRecipient, TParent> : IFi
     /// Combined version of Do(Action<TRecipient>) and Do(Action<TParameter>).
     public TransitionBuilder<TState, TEvent, TRecipient, TParent> Do<TParameter>(Action<TRecipient, TParameter> action);
 
+    ///  Configures the policy of how subscribed delegates to on entry hook should be executed.
+    /// If this method is not executed, the default policy is TransitionPolicy.ParentFirstWithCulling.
+    public GotoBuilder<TState, TEvent, TRecipient, TParent> OnEntryPolicy(TransitionPolicy policy);
+    
+    ///  Configures the policy of how subscribed delegates to on exit hook should be executed.
+    /// If this method is not executed, the default policy is TransitionPolicy.ChildFirstWithCulling.
+    public GotoBuilder<TState, TEvent, TRecipient, TParent> OnExitPolicy(TransitionPolicy policy);
+
     /// Determines to which state this transition goes.
+    /// This is equivalent to: OnEntryPolicy(TransitionPolicy.ChildFirstWithCulling).OnExitPolicy(TransitionPolicy.ParentFirstWithCulling).Goto(state).
     public TParent Goto(TState state);
 
     /// Determines to transite to the current state.
-    /// That means, that OnExit and OnEntry actions of current state (but not parent states in case of current state being a substate) will be executed.
-    public TParent GotoSelf();
+    /// If runParentsActions is true: OnExit and OnEntry actions of current state (but not parent states in case of current state being a substate) will be executed.
+    /// This is equivalent to OnEntryPolicy(TransitionPolicy.ChildFirstWithCullingInclusive).OnExitPolicy(TransitionPolicy.ParentFirstWithCullingInclusive).Goto(currentState).
+    /// If runParentActions is false: OnExit and OEntry actions of the current state (and parents in case of current state being a substate) will be executed.
+    /// This is equivalent to OnEntryPolicy(TransitionPolicy.ChildFirst).OnExitPolicy(TransitionPolicy.ParentFirst).Goto(currentState).
+    public TParent GotoSelf(bool runParentsActions = false);
 
     /// Determines that will have no transition to any state, so no OnEntry nor OnExit event will be raised.
+    /// This is equivalent to OnEntryPolicy(TransitionPolicy.Ignore).OnExitPolicy(TransitionPolicy.Ignore).GotoSelf().
     public TParent StaySelf();
 }
+
+public sealed class GotoBuilder<TState, TEvent, TRecipient, TParent> : IGoto<TState>
+    where TState : notnull
+    where TEvent : notnull
+{
+    /// Configures the policy of how subscribed delegates to on entry hook should be executed.
+    /// If this method is not executed, the default policy is TransitionPolicy.ParentFirstWithCulling.
+    public GotoBuilder<TState, TEvent, TRecipient, TParent> OnEntryPolicy(TransitionPolicy policy);
+    
+    /// Configures the policy of how subscribed delegates to on exit hook should be executed.
+    /// If this method is not executed, the default policy is TransitionPolicy.ChildrenFirstWithCulling.
+    public GotoBuilder<TState, TEvent, TRecipient, TParent> OnExitPolicy(TransitionPolicy policy);
+
+    /// Determines to which state this transition goes.
+    public TParent Goto(TState state);
+    
+    /// Determines to transite to the current state.
+    /// This is a shortcut of Goto(currentState).
+    public TParent GotoSelf();
+}
+
+/// Determines the transition policy between two states.
+/// This configures how subscribed delegates on states are run during transition between states.
+public enum TransitionPolicy
+{
+    /// Determines that subscribed delegates should not run.
+    Ignore = 0,
+
+    /// Determines that subscribed delegates on parents are run first.
+    ParentFirst = 1,
+
+    /// Determines that subscribed delegates on children are run first.
+    ChildFirst = 2,
+
+    /// Determines that subscribed delegates on parents are run first from (exluding) the last common parent between the two states.
+    ParentFirstWithCulling = 3,
+
+    /// Determines that subscribed delegates on children are run first until reach (excluding) the last common parent between the two states.
+    ChildFirstWithCulling = 4,
+
+    /// Determines that subscribed delegates on parents are run first from (including) the last common parent between the two states.
+    ParentFirstWithCullingInclusive = 5,
+
+    /// Determines that subscribed delegates on children are run first until reach (including) the last common parent between the two states.
+    ChildFirstWithCullingInclusive = 6,
+}
+```
 ```

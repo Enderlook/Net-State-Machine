@@ -6,37 +6,15 @@ internal readonly struct State<TState>
 {
     public readonly TState state;
     private readonly int subStateOf; // -1 if is not a substate.
-    private readonly int onEventsStart;
+    public readonly int onUpdateStart;
     public readonly int onUpdateLength;
-    public readonly int onEntryLength;
-    public readonly int onExitLength;
 
-    public int OnUpdateStart
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => onEventsStart;
-    }
-
-    public int OnEntryStart
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => onEventsStart + onUpdateLength;
-    }
-
-    public int OnExitStart
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => onEventsStart + onUpdateLength + onEntryLength;
-    }
-
-    public State(TState state, int subStateOf, int onEventsStart, int onUpdateLength, int onEntryLength, int onExitLength)
+    public State(TState state, int subStateOf, int onUpdateStart, int onUpdateLength)
     {
         this.state = state;
         this.subStateOf = subStateOf;
-        this.onEventsStart = onEventsStart;
+        this.onUpdateStart = onUpdateStart;
         this.onUpdateLength = onUpdateLength;
-        this.onEntryLength = onEntryLength;
-        this.onExitLength = onExitLength;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

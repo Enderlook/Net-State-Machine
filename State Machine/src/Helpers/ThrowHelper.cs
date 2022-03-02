@@ -43,8 +43,14 @@ internal static class ThrowHelper
     public static void ThrowInvalidOperationException_AlreadyHasFinalized()
         => throw new InvalidOperationException("The configuration of this state machine builder has already been finalized.");
 
+    public static void ThrowInvalidOperationException_AlreadyHasGoto()
+        => throw new InvalidOperationException("Already has defined a goto state.");
+
     public static void ThrowInvalidOperationException_AlreadyHasInitialState()
         => throw new InvalidOperationException("Already has registered initial state.");
+
+    public static void ThrowInvalidOperationException_AlreadyHasPolicy()
+        => throw new InvalidOperationException("The policy of this transition in respect of the specified subscribed delegates was already been configured");
 
     public static void ThrowInvalidOperationException_AlreadyIsSubState()
         => throw new InvalidOperationException("The sub state was already registered.");

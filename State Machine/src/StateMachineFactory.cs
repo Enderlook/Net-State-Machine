@@ -21,7 +21,7 @@ public sealed partial class StateMachineFactory<TState, TEvent, TRecipient>
     internal readonly TransitionEventUnion[] TransitionEvents;
     internal readonly Dictionary<(int State, TEvent Event), int> TransitionStartIndexes;
     internal readonly int InitialState;
-    internal readonly bool RunEntryActionsOfInitialState;
+    internal readonly int InitialStateOnEntryStart;
 
     // This values are rarely used so we lazy initialize them.
     // Some of this values could be removed by using an additional indirection (using a Dictionary<TState, int>).
@@ -32,14 +32,14 @@ public sealed partial class StateMachineFactory<TState, TEvent, TRecipient>
     private ReadOnlySlice<TEvent>[]? eventsSupportedByStateIndex;
     private Dictionary<TState, ReadOnlySlice<TEvent>>? eventsSupportedByState;
 
-    internal StateMachineFactory(State<TState>[] states, StateEventUnion[] stateEvents, TransitionEventUnion[] transitionEvents, Dictionary<(int State, TEvent Event), int> transitionStartIndexes, int initialState, bool runEntryActionsOfInitialState)
+    internal StateMachineFactory(State<TState>[] states, StateEventUnion[] stateEvents, TransitionEventUnion[] transitionEvents, Dictionary<(int State, TEvent Event), int> transitionStartIndexes, int initialState, int initialStateOnEntryStart)
     {
         States = states;
         StateEvents = stateEvents;
         TransitionEvents = transitionEvents;
         TransitionStartIndexes = transitionStartIndexes;
         InitialState = initialState;
-        RunEntryActionsOfInitialState = runEntryActionsOfInitialState;
+        InitialStateOnEntryStart = initialStateOnEntryStart;
     }
 
     /// <summary>

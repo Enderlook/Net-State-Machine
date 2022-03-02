@@ -15,6 +15,30 @@ internal readonly struct StateEventUnion
         this.type = type;
     }
 
+    public TransitionEventUnion ToTransitionEvent()
+    {
+        TransitionEventType type;
+        switch (this.type)
+        {
+            case StateEventType.Empty:
+                type = TransitionEventType.Empty;
+                break;
+            case StateEventType.HasRecipient:
+                type = TransitionEventType.HasRecipient;
+                break;
+            case StateEventType.HasParameter:
+                type = TransitionEventType.HasParameter;
+                break;
+            case StateEventType.HasRecipient | StateEventType.HasParameter:
+                type = TransitionEventType.HasRecipient | TransitionEventType.HasParameter;
+                break;
+            default:
+                Debug.Fail("Impossible state");
+                goto case StateEventType.Empty;
+        }
+        return new(action, type, default);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Invoke<TRecipient>(TRecipient recipient, SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
     {
