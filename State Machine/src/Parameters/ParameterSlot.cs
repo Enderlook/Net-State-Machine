@@ -8,6 +8,7 @@ internal readonly struct ParameterSlot
     private readonly ParameterSlots container;
     private readonly int slot;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ParameterSlot(ParameterSlots container, int slot)
     {
         this.container = container;

@@ -180,7 +180,6 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     /// <param name="event">Event to fire.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="event"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Fire(TEvent @event)
     {
         if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
@@ -196,7 +195,6 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     /// <param name="event">Event to fire.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="event"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FireImmediately(TEvent @event)
     {
         if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
@@ -208,7 +206,6 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     /// Executes the update callbacks registered in the current state.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Update()
     {
         if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
@@ -392,10 +389,18 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     internal int StoreFirstParameter<TParameter>(TParameter parameter)
     {
         if (!parameters.TryGetValue(typeof(TParameter), out ParameterSlots? container))
-            parameters.Add(typeof(TParameter), container = new ParameterSlots<TParameter>());
+            container = CreateParameterSlot<TParameter>();
         Debug.Assert(container is ParameterSlots<TParameter>);
         int index = Unsafe.As<ParameterSlots<TParameter>>(container).Store(parameter, false);
         return parameterIndexes.StoreLast(new(container, index), false);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)] // No inline to improve code quality since this is a cold path.
+    private ParameterSlots<TParameter> CreateParameterSlot<TParameter>()
+    {
+        ParameterSlots<TParameter> container = new();
+        parameters.Add(typeof(TParameter), container);
+        return container;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]

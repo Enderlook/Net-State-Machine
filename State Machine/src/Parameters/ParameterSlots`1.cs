@@ -7,6 +7,7 @@ internal sealed class ParameterSlots<TParameter> : ParameterSlots
 {
     private SlotsQueue<TParameter> queue;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ParameterSlots() => queue = new(1);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)] // Required for constant propagation of parameter

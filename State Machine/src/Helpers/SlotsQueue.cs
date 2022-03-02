@@ -25,6 +25,7 @@ internal struct SlotsQueue<T>
         get => queue[index].Value;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public SlotsQueue(int initialSize)
     {
         queue = initialSize == 0 ? Array.Empty<(T Value, int Next)>() : new (T Value, int Next)[initialSize];

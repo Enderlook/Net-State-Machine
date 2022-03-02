@@ -25,7 +25,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     internal void StoreParameter<TParameter>(TParameter parameter)
     {
         if (!parameters.TryGetValue(typeof(TParameter), out ParameterSlots? container))
-            parameters.Add(typeof(TParameter), container = new ParameterSlots<TParameter>());
+            container = CreateParameterSlot<TParameter>();
         Debug.Assert(container is ParameterSlots<TParameter>);
         int index = Unsafe.As<ParameterSlots<TParameter>>(container).Store(parameter, false);
         parameterIndexes.StoreLast(new(container, index), true);
