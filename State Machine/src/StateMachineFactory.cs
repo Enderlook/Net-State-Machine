@@ -52,6 +52,21 @@ public sealed partial class StateMachineFactory<TState, TEvent, TRecipient>
     public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient)
         => StateMachine<TState, TEvent, TRecipient>.From(this, recipient);
 
+    /// <summary>
+    /// Creates a configured and initialized <see cref="StateMachine{TState, TEvent, TRecipient}"/> using the configuration provided by this factory.<br/>
+    /// This method is thread-safe.<br/>
+    /// Additionally, this methods allows to store a parameter that will be passed to the subscribed delegates of the on entry of the initial state (this is ignored is the factory was configured to do so).
+    /// </summary>
+    /// <typeparam name="TParameter">Parameter type.</typeparam>
+    /// <param name="parameter">Parameter to store.</param>
+    /// <returns>A builder of parameters to store that will be passed during the creation of the instance.</returns>
+    public StateMachine<TState, TEvent, TRecipient>.InitializeParametersBuilder With<TParameter>(TParameter parameter)
+    {
+        StateMachine<TState, TEvent, TRecipient> stateMachine = new(this);
+        stateMachine.StoreFirstParameterInBuilder(parameter);
+        return new(stateMachine);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ParentStateOf(TState state, [NotNullWhen(true)] out TState? parentState)
     {

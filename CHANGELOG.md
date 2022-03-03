@@ -44,6 +44,12 @@ public partial sealed class StateMachine<TState, TEvent, TRecipient>
 +       public void FireImmediately(TEvent);
 +       public void Update(TEvent);
 +   }
+
++   public readonly struct InitializeParametersBuilder
++   {
++       public InitializeParametersBuilder With<TParameter>(TParameter parameter);
++       public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
++   }
 }
 
 public sealed class StateMachineFactory<TState, TEvent, TRecipient>
@@ -51,13 +57,7 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
 -   public StateMachine<TState, TEvent, TRecipient> CreateWithParameter<TParameter>(TRecipient recipient, TParameter parameter);    
 -   public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient);
 
-+   public ParametersBuilder With<T>(T parameter);
-
-+   public readonly struct ParametersBuilder
-+   {
-+       public ParametersBuilder With<TParameter>(TParameter parameter);
-+       public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
-+   }
++   public StateMachine<TState, TEvent, TRecipient>.InitializeParametersBuilder With<T>(T parameter);
 }
 
 public sealed partial class TransitionBuilder<TState, TEvent, TRecipient, TParent> : IFinalizable, ITransitionBuilder<TState>

@@ -307,6 +307,15 @@ public sealed class StateMachine<TState, TEvent, TRecipient>
         
         /// Same as Update(TEvent) in parent class but includes all the stored value that can be passed to subscribed delegates.
         public void Update(TEvent);
+    }	
+
+    public readonly struct InitializeParametersBuilder
+    {
+        /// Stores a parameter tha can be passed to callbacks.
+        public InitializeParametersBuilder With<TParameter>(TParameter parameter);
+
+        /// Creates the state machine.
+        public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
     }
 }
 
@@ -318,16 +327,7 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
     public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
     
     /// Stores a parameter(s) that can be passed to subscribed delegates.
-    public ParametersBuilder With<T>(T parameter);
-
-    public readonly struct ParametersBuilder
-    {
-        /// Stores a parameter tha can be passed to callbacks.
-        public ParametersBuilder With<TParameter>(TParameter parameter);
-
-        /// Creates the state machine.
-        public StateMachine<TState, TEvent, TRecipient> Create(TRecipient recipient);
-    }
+    public StateMachine<TState, TEvent, TRecipient>.InitializeParametersBuilder With<T>(T parameter);
 }
 
 public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizable

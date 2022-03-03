@@ -17,7 +17,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     {
         if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
         int parameterBuilderVersion = ++this.parameterBuilderVersion;
-        parameterBuilderFirstIndex = StoreFirstParameter(parameter);
+        StoreFirstParameterInBuilder(parameter);
         return new(this, parameterBuilderVersion);
     }
 
