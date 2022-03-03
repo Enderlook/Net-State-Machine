@@ -58,7 +58,7 @@ internal static class ThrowHelper
     public static void ThrowInvalidOperationException_DoesNotHaveRegisteredStates()
         => throw new InvalidOperationException("The state machine builder doesn't have registered any state.");
 
-    public static void ThrowInvalidOperationException_EventNotRegisterForState<TState, TEvent>(State<TState> state, TEvent @event)
+    public static void ThrowInvalidOperationException_EventNotRegisterForState<TState, TEvent>(TState state, TEvent @event)
         where TState : notnull
         where TEvent : notnull
         => throw new InvalidOperationException($"Not found a transition for event {@event} in current state {state}.");

@@ -323,6 +323,7 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
 +   }
 }
 ```
+- Fix error message when transition is not found in current state.
 
 # API
 
