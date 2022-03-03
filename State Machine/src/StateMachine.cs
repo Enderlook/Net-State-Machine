@@ -47,7 +47,9 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     internal static StateMachine<TState, TEvent, TRecipient> From(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient)
     {
         StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient);
-        stateMachine.RunInitialStateEntry(default);
+        StateEventUnion[] stateEvents = flyweight.StateEvents;
+        for (int i = flyweight.InitialStateOnEntryStart; i < stateEvents.Length; i++)
+            stateEvents[i].Invoke(recipient, default);
         return stateMachine;
     }
 
@@ -338,22 +340,6 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RunInitialStateEntry(SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
-    {
-        StateEventUnion[] stateEvents = flyweight.StateEvents;
-        for (int i = flyweight.InitialStateOnEntryStart; i < stateEvents.Length; i++)
-            stateEvents[i].Invoke(recipient, parametersEnumerator);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RunInitialStateEntryAndDisposeParameters(SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
-    {
-        RunInitialStateEntry( parametersEnumerator);
-        Debug.Assert(parametersEnumerator.Has);
-        parameterIndexes.RemoveFrom(parametersEnumerator.CurrentIndex);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Update(int parametersStartIndex)
     {
         SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator = parameterIndexes.GetEnumeratorStartingAt(parametersStartIndex);
@@ -386,13 +372,14 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal int StoreFirstParameter<TParameter>(TParameter parameter)
+    internal void StoreFirstParameterInBuilder<TParameter>(TParameter parameter)
     {
         if (!parameters.TryGetValue(typeof(TParameter), out ParameterSlots? container))
             container = CreateParameterSlot<TParameter>();
         Debug.Assert(container is ParameterSlots<TParameter>);
         int index = Unsafe.As<ParameterSlots<TParameter>>(container).Store(parameter, false);
-        return parameterIndexes.StoreLast(new(container, index), false);
+        Debug.Assert(parameterBuilderFirstIndex == -1);
+        parameterBuilderFirstIndex = parameterIndexes.StoreLast(new(container, index), false);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)] // No inline to improve code quality since this is a cold path.
@@ -424,13 +411,15 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Initialize(TRecipient recipient)
     {
+        parameterBuilderVersion++;
         this.recipient = recipient;
         int index = parameterBuilderFirstIndex;
+        Debug.Assert(index != -1);
         parameterBuilderFirstIndex = -1;
         SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator = parameterIndexes.GetEnumeratorStartingAt(index);
         StateEventUnion[] stateEvents = flyweight.StateEvents;
         for (int i = flyweight.InitialStateOnEntryStart; i < stateEvents.Length; i++)
             stateEvents[i].Invoke(recipient, parametersEnumerator);
-        RemoveParameters(index);
+        parameterIndexes.RemoveFrom(index);
     }
 }
