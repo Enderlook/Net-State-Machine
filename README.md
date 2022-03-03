@@ -57,14 +57,20 @@ public class Character
         }
     }
 
-    public Character() => stateMachine = GetStateMachineFactory().Create(this);
+    public Character()
+    {
+        // Creates an instance of the state machine.
+        stateMachine = GetStateMachineFactory().Create(this);
+     // Alternatively if you want to pass parameters to the initialization of the state machine you can do:
+     // stateMachine = GetStateMachineFactory().With(parameter).Create(this).
+    }
 
     private static StateMachineFactory<States, Events, Character> GetStateMachineFactory()
     {
         if (factory is not null)
             return factory;
 
-        StateMachineFactory<States, Events, Character>? factory_ =  StateMachine<States, Events, Character>
+        StateMachineFactory<States, Events, Character>? factory_ = StateMachine<States, Events, Character>
             // State machines are created from factories which makes the creations of multiple instances
             // cheaper in both CPU and memory since computation is done once and shared between created instances.
             .CreateFactoryBuilder()
@@ -88,15 +94,24 @@ public class Character
                     .Do(() => Console.WriteLine("Pick toys."))
                     // New state to transite.
                     .Goto(States.Play)
+                // Alternatively, you can configure the event execution policy during the transition.
+                // The above method call is equivalent to:
+                // .OnEntryPolicy(TransitionPolicy.ChildFirstWithCulling).OnExitPolicy(TransitionPolicy.ParentFirstWithCulling).Goto(States.Play).
                 .On(Events.IsHungry)
                     // Only execute the next call if the condition is true.
                     .If(@this => @this.IsVeryWounded())
                         // We stay in our current state without executing OnEntry nor OnExit delegates.
                         .StaySelf()
+                    // The above method is a shortcut of:
+                    //  .OnEntryPolicy(TransitionPolicy.Ignore).OnExitPolicy(TransitionPolicy.Ignore).Goto(States.Sleep).
                     // If we wanted to execute those delegates we can use:
-                    //  .Goto(States.Sleep)
-                    // Or:
-                    //  .GotoSelf()
+                    //  .GotoSelf(false)
+                    // Which is the shortcut of:
+                    //  .OnEntryPolicy(TransitionPolicy.ChildFirstWithCullingInclusive).OnExitPolicy(TransitionPolicy.ParentFirstWithCullingInclusive).Goto(States.Sleep).
+                    // If additionally, we wanted to execute transition delegates from its parents states (something which is not useful in this example since State.Sleep is not a substate) we can do:
+                    //  .GotoSelf(true)
+                    // Which is the shortcut of:
+                    //  .OnEntryPolicy(TransitionPolicy.ChildFirst).OnExitPolicy(TransitionPolicy.ParentFirst).Goto(States.Sleep).
                     // Else execute the next call if the condition is true.
                     .If(@this => @this.IsWounded())
                         .Goto(States.Gather)
@@ -105,6 +120,8 @@ public class Character
                 // Ignore this event in this transition.
                 // (If we don't add this and we accidentally fire this event an exception is thrown).
                 .Ignore(Events.LowHealth)
+            // Which is the shortcut of:
+            //  .On(Events.LowHealth).OnEntryPolicy(TransitionPolicy.Ignore).OnExitPolicy(TransitionPolicy.Ignore).Goto(States.Sleep).
             .In(States.Play)
                 .OnUpdate(@this => @this.OnUpdatePlay())
                 .On(Events.IsHungry)
@@ -116,9 +133,9 @@ public class Character
                 .OnExit(() => Console.WriteLine("Stop going for food."))
             .In(States.Gather)
                 // Determines that this state is a substate of another.
-                // This means that OnUpdate delegates in the parent state will also be run,
-                // moreover the parent's OnEntry and OnExit delegates will only be run if entering or exiting the parent state,
-                // (that means, they are not run if transiting between different substates of the same parent state).
+                // This means that OnUpdate delegates in the parent state will also be run.
+                // Also depending on the configured OnEntryPolicy and OnExitPolicy during transitions,
+                // the OnEntry and OnExit delegates subscribted in this state may be run during transitions in substates.
                 .IsSubStateOf(States.GettingFood)
                 .OnUpdate((Character @this, float parameter) => @this.OnUpdateGather(parameter))
                 .On(Events.IsNoLongerHungry)
