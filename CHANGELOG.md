@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.4.0
+- Add support to customize transition policies.
 - Modify following APIs:
 ```diff
 public partial sealed class StateMachine<TState, TEvent, TRecipient>
