@@ -43,7 +43,7 @@ public class Character
             Console.Clear();
 
             // Executes an update call of the state machine and pass an arbitrary parameter to it.
-            // Parameter is generic so it doesn't allocate of value types.
+            // Parameter is generic so it doesn't allocate on value types.
             // This parameter is passed to subscribed delegate which accepts the generic argument type in it's signature.
             // If you don't want to pass a parameter you can remove the .With() method call.
             // This parameter system can also be used with fire event methods.
