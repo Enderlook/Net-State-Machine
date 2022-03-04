@@ -390,7 +390,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         return container;
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
+    [MethodImpl(MethodImplOptions.NoInlining)] // No inline to improve code quality since this is a cold path.
     private void ClearQueue()
     {
         while (queue.TryDequeue(out (TEvent Event, int ParameterIndex) event_))
