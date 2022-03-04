@@ -77,13 +77,13 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
             stateMachine.EnqueueAndRun(@event, index);
         }
 
-        /// <inheritdoc cref="StateMachine{TState, TEvent, TRecipient}.Update()"/>
-        public void Update()
+        /// <inheritdoc cref="StateMachine{TState, TEvent, TRecipient}.Update(ExecutionPolicy)"/>
+        public void Update(ExecutionPolicy executionPolicy = ExecutionPolicy.ParentFirst)
         {
             if (stateMachine.parameterBuilderVersion != parameterBuilderVersion) ThrowHelper.ThrowInvalidOperationException_ParameterBuilderWasFinalized();
             int index = stateMachine.parameterBuilderFirstIndex;
             stateMachine.parameterBuilderFirstIndex = -1;
-            stateMachine.Update(index);
+            stateMachine.Update(executionPolicy, index);
         }
     }
 }

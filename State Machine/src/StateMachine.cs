@@ -207,11 +207,12 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     /// <summary>
     /// Executes the update callbacks registered in the current state.
     /// </summary>
+    /// <param name="executionPolicy">Determines in which order subscribed callbacks to this state (and its parents, if it is a substate) are executed.</param>
     /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
-    public void Update()
+    public void Update(ExecutionPolicy executionPolicy = ExecutionPolicy.ParentFirst)
     {
         if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();
-        RunUpdate(currentState, default);
+        RunUpdate(currentState, executionPolicy, default);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -340,12 +341,12 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Update(int parametersStartIndex)
+    private void Update(ExecutionPolicy executionPolicy, int parametersStartIndex)
     {
         SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator = parameterIndexes.GetEnumeratorStartingAt(parametersStartIndex);
         try
         {
-            RunUpdate(currentState, parametersEnumerator);
+            RunUpdate(currentState, executionPolicy, parametersEnumerator);
         }
         finally
         {
@@ -355,19 +356,63 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RunUpdate(int stateIndex, SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
+    private void RunUpdate(int stateIndex, ExecutionPolicy executionPolicy, SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
     {
-        State<TState> state = flyweight.States[stateIndex];
-        if (state.TryGetParentState(out int parentState))
-            RunUpdate(parentState, parametersEnumerator);
-        if (state.onUpdateLength != 0)
+        switch (executionPolicy)
         {
-            int index = state.onUpdateStart;
-            int to = index + state.onUpdateLength;
-            StateEventUnion[] stateEvents = flyweight.StateEvents;
-            TRecipient recipient = this.recipient;
-            for (; index < to; index++)
-                stateEvents[index].Invoke(recipient, parametersEnumerator);
+            case ExecutionPolicy.ParentFirst:
+            {
+                Traverse(stateIndex);
+
+                void Traverse(int stateIndex)
+                {
+                    State<TState> state = flyweight.States[stateIndex];
+                    if (state.TryGetParentState(out int parentState))
+                        RunUpdate(parentState, executionPolicy, parametersEnumerator);
+                    if (state.onUpdateLength != 0)
+                    {
+                        int index = state.onUpdateStart;
+                        int to = index + state.onUpdateLength;
+                        StateEventUnion[] stateEvents = flyweight.StateEvents;
+                        TRecipient recipient = this.recipient;
+                        for (; index < to; index++)
+                            stateEvents[index].Invoke(recipient, parametersEnumerator);
+                    }
+                }
+                break;
+            }
+            case ExecutionPolicy.ChildFirst:
+            {
+                State<TState> state;
+                do
+                {
+                    state = flyweight.States[stateIndex];
+                    if (state.onUpdateLength != 0)
+                    {
+                        int index = state.onUpdateStart;
+                        int to = index + state.onUpdateLength;
+                        StateEventUnion[] stateEvents = flyweight.StateEvents;
+                        TRecipient recipient = this.recipient;
+                        for (; index < to; index++)
+                            stateEvents[index].Invoke(recipient, parametersEnumerator);
+                    }
+                } while (state.TryGetParentState(out stateIndex));
+                break;
+            }
+            case ExecutionPolicy.Current:
+            {
+                State<TState> state = flyweight.States[stateIndex];
+                if (state.onUpdateLength != 0)
+                {
+                    int index = state.onUpdateStart;
+                    int to = index + state.onUpdateLength;
+                    StateEventUnion[] stateEvents = flyweight.StateEvents;
+                    TRecipient recipient = this.recipient;
+                    for (; index < to; index++)
+                        stateEvents[index].Invoke(recipient, parametersEnumerator);
+                }
+                break;
+            }
         }
     }
 
