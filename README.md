@@ -75,8 +75,9 @@ public class Character
             // cheaper in both CPU and memory since computation is done once and shared between created instances.
             .CreateFactoryBuilder()
             // Determines the initial state of the state machine.
-            // false specify that we don't want to run the OnEntry delegates of the Sleep state during the initialization of the state machine.
-            .SetInitialState(States.Sleep, false)
+            // The second parameter determines how OnEntry delegates should be executed during the initialization of the state machine,
+            // InitializationPolicy.Ignore means they should not be run.
+            .SetInitialState(States.Sleep, InitializationPolicy.Ignore)
             // Configures an state.
             .In(States.Sleep)
                 // Executed every time we enter to this state.
@@ -335,8 +336,8 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient> : IFinalizab
     where TEvent : notnull
 {
     /// Determines the initial state of the state machine.
-    /// If `runEntryActions` is true, subscribed delegates to the OnEntry ovents of the specified state will be run during the initialization of the state machine.
-    public StateMachineBuilder<TState, TEvent, TRecipient> SetInitialState(TState state, bool runEntryActions = true);
+    /// `initializationPolicy` determines how subscribed delegates to the OnEntry ovents of the specified state (and parent states) will be run during the initialization of the state machine.
+    public StateMachineBuilder<TState, TEvent, TRecipient> SetInitialState(TState state, ExecutionPolicy initializationPolicy = ExecutionPolicy.ChildFirst);
 
     ///  Add a new state or loads a previously added state.
     public StateBuilder<TState, TEvent, TRecipient> In(TState state);

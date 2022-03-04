@@ -18,7 +18,7 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
     private readonly Dictionary<TState, StateBuilder<TState, TEvent, TRecipient>> states = new();
     private bool hasInitialState;
     private TState? initialState;
-    private bool runEntryActionsOfInitialState;
+    private InitializationPolicy initialStateExecutionPolicy;
 
     internal bool HasFinalized { get; private set; }
 
@@ -26,19 +26,19 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
     /// Determines the initial state of the state machine.
     /// </summary>
     /// <param name="state">Initial state.</param>
-    /// <param name="runEntryActions">If <see langword="true"/>, the actions stored in <see cref="StateBuilder{TState, TEvent, TRecipient}.OnEntry(Action)"/> (and overloads) of the state <see cref="State{TState}"/> will be run during intialization.</param>
+    /// <param name="initializationPolicy">Determines the execution order of subscribed delegates in <see cref="StateBuilder{TState, TEvent, TRecipient}.OnEntry(Action)"/> (and overloads) in the initial state.</param>
     /// <returns><see langword="this"/>.</returns>
     /// <exception cref="InvalidOperationException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
     /// Thrown when <paramref name="state"/> is <see langword="null"/>.<br/>
     /// Thrown when the initial state was already registered.</exception>
-    public StateMachineBuilder<TState, TEvent, TRecipient> SetInitialState(TState state, bool runEntryActions = true)
+    public StateMachineBuilder<TState, TEvent, TRecipient> SetInitialState(TState state, InitializationPolicy initializationPolicy = InitializationPolicy.ParentFirst)
     {
         if (HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (state is null) ThrowHelper.ThrowArgumentNullException_State();
         if (hasInitialState) ThrowHelper.ThrowInvalidOperationException_AlreadyHasInitialState();
         hasInitialState = true;
         initialState = state;
-        runEntryActionsOfInitialState = runEntryActions;
+        initialStateExecutionPolicy = initializationPolicy;
         return this;
     }
 
@@ -66,7 +66,7 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
     /// </summary>
     /// <returns>Created factory.</returns>
     /// <exception cref="InvalidOperationException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
-    /// Thrown when <see cref="SetInitialState(TState, bool)"/> was not called.<br/>
+    /// Thrown when <see cref="SetInitialState(TState, InitializationPolicy)"/> was not called.<br/>
     /// Thrown when <see cref="In(TState)"/> was not called.<br/>
     /// Thrown when a transition was not terminated with <see cref="TransitionBuilder{TState, TEvent, TRecipient, TParent}.Goto(TState)"/>, <see cref="TransitionBuilder{TState, TEvent, TRecipient, TParent}.StaySelf"/> nor <see cref="TransitionBuilder{TState, TEvent, TRecipient, TParent}"/>.<br/>
     /// Thrown when an state has a not registered parent state passed to <see cref="StateBuilder{TState, TEvent, TRecipient}.IsSubStateOf(TState)"/>.
@@ -116,16 +116,22 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
         foreach (KeyValuePair<TState, StateBuilder<TState, TEvent, TRecipient>> kv in this.states)
             kv.Value.PrepareAndCheck(this.states, statesMap, ref i, ref transitionEventsCount, ref stateEventsCount, ref transitionsCount);
 
-        if (runEntryActionsOfInitialState)
+        switch (initialStateExecutionPolicy)
         {
-            StateBuilder<TState, TEvent, TRecipient> stateBuilder = this.states[initialState];
-            while (true)
-            {
-                stateEventsCount += stateBuilder.OnEntryCount;
-                if (!stateBuilder.IsSubState(out TState? state))
-                    break;
-                stateBuilder = this.states[state];
-            }
+            case InitializationPolicy.ChildFirst:
+            case InitializationPolicy.ParentFirst:
+                StateBuilder<TState, TEvent, TRecipient> stateBuilder = this.states[initialState];
+                while (true)
+                {
+                    stateEventsCount += stateBuilder.OnEntryCount;
+                    if (!stateBuilder.IsSubState(out TState? state))
+                        break;
+                    stateBuilder = this.states[state];
+                }
+                break;
+            case InitializationPolicy.Current:
+                stateEventsCount += this.states[initialState].OnEntryCount;
+                break;
         }
 
         State<TState>[] states = new State<TState>[statesCount];
@@ -143,16 +149,31 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
         Debug.Assert(transitionStartIndexes.Count == transitionsCount);
 
         int initialStateOnEntryStart = iStateEvents;
-        if (runEntryActionsOfInitialState)
+        switch (initialStateExecutionPolicy)
         {
-            Traverse(this.states[initialState], ref iStateEvents);
+            case InitializationPolicy.ChildFirst:
+                StateBuilder<TState, TEvent, TRecipient> stateBuilder = this.states[initialState];
+                while (true)
+                {
+                    stateBuilder.CopyOnEntryTo(stateEvents, ref iStateEvents);
+                    if (!stateBuilder.IsSubState(out TState? state))
+                        break;
+                    stateBuilder = this.states[state];
+                }
+                break;
+            case InitializationPolicy.ParentFirst:
+                Traverse(this.states[initialState], ref iStateEvents);
 
-            void Traverse(StateBuilder<TState, TEvent, TRecipient> stateBuilder, ref int iStateEvents)
-            {
-                if (stateBuilder.IsSubState(out TState? state))
-                    Traverse(this.states[state], ref iStateEvents);
-                stateBuilder.CopyOnEntryTo(stateEvents, ref iStateEvents);
-            }
+                void Traverse(StateBuilder<TState, TEvent, TRecipient> stateBuilder, ref int iStateEvents)
+                {
+                    if (stateBuilder.IsSubState(out TState? state))
+                        Traverse(this.states[state], ref iStateEvents);
+                    stateBuilder.CopyOnEntryTo(stateEvents, ref iStateEvents);
+                }
+                break;
+            case InitializationPolicy.Current:
+                this.states[initialState].CopyOnEntryTo(stateEvents, ref iStateEvents);
+                break;
         }
 
         return new StateMachineFactory<TState, TEvent, TRecipient>(states, stateEvents, transitionEvents, transitionStartIndexes, statesMap[initialState], initialStateOnEntryStart);

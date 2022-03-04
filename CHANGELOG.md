@@ -59,6 +59,9 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
 -   public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient);
 
 +   public StateMachine<TState, TEvent, TRecipient>.InitializeParametersBuilder With<T>(T parameter);
+
+-   public StateMachineBuilder<TState, TEvent, TRecipient> SetInitialState(TState state, bool runEntryActions = true);
++   public StateMachineBuilder<TState, TEvent, TRecipient> SetInitialState(TState state, InitializationPolicy initializationPolicy = InitializationPolicy.ChildFirst);
 }
 
 public sealed partial class TransitionBuilder<TState, TEvent, TRecipient, TParent> : IFinalizable, ITransitionBuilder<TState>
@@ -88,6 +91,14 @@ public sealed partial class TransitionBuilder<TState, TEvent, TRecipient, TParen
 +   ChildFirstWithCulling = 4,
 +   ParentFirstWithCullingInclusive = 5,
 +   ChildFirstWithCullingInclusive = 6,
++}
+
++public enum InitializationPolicy
++{
++   Ignore = 0,
++   ParentFirst = 1,
++   ChildFirst = 2,
++   Current = 3,
 +}
 ```
 - Fix error message when transition is not found in current state.
