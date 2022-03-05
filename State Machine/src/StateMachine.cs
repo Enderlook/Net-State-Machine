@@ -305,9 +305,8 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         try
         {
             int currentState = this.currentState;
-            State<TState>[] states = flyweight.States;
             if (!flyweight.TransitionStartIndexes.TryGetValue((currentState, @event), out int transitionIndex))
-                ThrowHelper.ThrowInvalidOperationException_EventNotRegisterForState(states[currentState].state, @event);
+                ThrowHelper.ThrowInvalidOperationException_EventNotRegisterForState(flyweight.States[currentState].state, @event);
 
             TransitionEventUnion[] transitionEvents = flyweight.TransitionEvents;
             TRecipient recipient = this.recipient;
