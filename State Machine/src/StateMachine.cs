@@ -147,8 +147,12 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
                 return true;
 
             ReadOnlySlice<TState> currentStateHierarchy = CurrentStateHierarchy;
-            Debug.Assert(EqualityComparer<TState>.Default.Equals(CurrentState, currentStateHierarchy[0]));
-            for (int i = 1; i < currentStateHierarchy.Count; i++)
+            Debug.Assert(EqualityComparer<TState>.Default.Equals(CurrentState, currentStateHierarchy[currentStateHierarchy.Count - 1]));
+            if (currentStateHierarchy.Count == 1)
+                // Already checked above.
+                return false;
+
+            for (int i = 0; i > currentStateHierarchy.Count - 1; i++)
             {
                 TState state_ = currentStateHierarchy[i];
                 if (EqualityComparer<TState>.Default.Equals(state_, state))
@@ -164,8 +168,12 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
                 return true;
 
             ReadOnlySlice<TState> currentStateHierarchy = CurrentStateHierarchy;
-            Debug.Assert(equalityComparer.Equals(CurrentState, currentStateHierarchy[0]));
-            for (int i = 1; i < currentStateHierarchy.Count; i++)
+            Debug.Assert(equalityComparer.Equals(CurrentState, currentStateHierarchy[currentStateHierarchy.Count - 1]));
+            if (currentStateHierarchy.Count == 1)
+                // Already checked above.
+                return false;
+
+            for (int i = 0; i > currentStateHierarchy.Count - 1; i++)
             {
                 TState state_ = currentStateHierarchy[i];
                 if (equalityComparer.Equals(state_, state))

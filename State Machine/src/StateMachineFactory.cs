@@ -261,10 +261,12 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
         int j = 0;
         for (int i = 0; i < length; i++)
         {
-            List<TEvent> list = tmp[i];
-            eventsSupportedByStateIndex_[i] = new ReadOnlySlice<TEvent>(events, j, list.Count);
-            foreach (TEvent @event in list)
-                events[j++] = @event;
+            if (tmp[i] is List<TEvent> list)
+            {
+                eventsSupportedByStateIndex_[i] = new ReadOnlySlice<TEvent>(events, j, list.Count);
+                foreach (TEvent @event in list)
+                    events[j++] = @event;
+            }
         }
 
         // We assing the field at the end to prevent racing conditions.
