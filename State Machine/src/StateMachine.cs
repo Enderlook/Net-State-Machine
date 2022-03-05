@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Enderlook.StateMachine;
 
@@ -47,9 +48,14 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     internal static StateMachine<TState, TEvent, TRecipient> From(StateMachineFactory<TState, TEvent, TRecipient> flyweight, TRecipient recipient)
     {
         StateMachine<TState, TEvent, TRecipient> stateMachine = new(flyweight, recipient);
-        StateEventUnion[] stateEvents = flyweight.StateEvents;
-        for (int i = flyweight.InitialStateOnEntryStart; i < stateEvents.Length; i++)
-            stateEvents[i].Invoke(recipient, default);
+        int initialStateOnEntryStart = flyweight.InitialStateOnEntryStart;
+        if (initialStateOnEntryStart != -1)
+        {
+            Debug.Assert(flyweight.StateEvents.Length > initialStateOnEntryStart);
+            StateEventUnion[] stateEvents = flyweight.StateEvents;
+            for (int i = initialStateOnEntryStart; i < stateEvents.Length; i++)
+                stateEvents[i].Invoke(recipient, default);
+        }
         return stateMachine;
     }
 
@@ -59,7 +65,15 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     public TState CurrentState
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => flyweight.States[currentState].state;
+        get
+        {
+#if NET5_0_OR_GREATER
+            Debug.Assert(flyweight.States.Length > currentState);
+            return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(flyweight.States), currentState).state;
+#else
+            return flyweight.States[currentState].state;
+#endif
+        }
     }
 
     /// <summary>
@@ -152,11 +166,13 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
                 // Already checked above.
                 return false;
 
-            for (int i = 0; i > currentStateHierarchy.Count - 1; i++)
+            ref TState current = ref currentStateHierarchy.GetUnsafe(0);
+            ref TState end = ref Unsafe.Add(ref current, currentStateHierarchy.Count - 1);
+            while (Unsafe.IsAddressLessThan(ref current, ref end))
             {
-                TState state_ = currentStateHierarchy[i];
-                if (EqualityComparer<TState>.Default.Equals(state_, state))
+                if (EqualityComparer<TState>.Default.Equals(current, state))
                     return true;
+                current = ref Unsafe.Add(ref current, 1);
             }
         }
         else
@@ -173,11 +189,13 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
                 // Already checked above.
                 return false;
 
-            for (int i = 0; i > currentStateHierarchy.Count - 1; i++)
+            ref TState current = ref currentStateHierarchy.GetUnsafe(0);
+            ref TState end = ref Unsafe.Add(ref current, currentStateHierarchy.Count - 1);
+            while (Unsafe.IsAddressLessThan(ref current, ref end))
             {
-                TState state_ = currentStateHierarchy[i];
-                if (equalityComparer.Equals(state_, state))
+                if (equalityComparer.Equals(current, state))
                     return true;
+                current = ref Unsafe.Add(ref current, 1);
             }
         }
         return false;
@@ -316,12 +334,16 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
             if (!flyweight.TransitionStartIndexes.TryGetValue((currentState, @event), out int transitionIndex))
                 ThrowHelper.ThrowInvalidOperationException_EventNotRegisterForState(flyweight.States[currentState].state, @event);
 
-            TransitionEventUnion[] transitionEvents = flyweight.TransitionEvents;
+#if NET5_0_OR_GREATER
+            ref TransitionEventUnion transitionEvent_0 = ref MemoryMarshal.GetArrayDataReference(flyweight.TransitionEvents);
+#else
+            ref TransitionEventUnion transitionEvent_0 = ref flyweight.TransitionEvents[0];
+#endif
             TRecipient recipient = this.recipient;
             while (true)
             {
-                TransitionEventUnion transitionEventUnion = transitionEvents[transitionIndex];
-                (TransitionResult Result, int Index) value = transitionEventUnion.Invoke(recipient, parametersEnumerator);
+                Debug.Assert(flyweight.TransitionEvents.Length >= transitionIndex);
+                (TransitionResult Result, int Index) value = Unsafe.Add(ref transitionEvent_0, transitionIndex).Invoke(recipient, parametersEnumerator);
                 switch (value.Result)
                 {
                     case TransitionResult.Continue:
@@ -369,12 +391,18 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
             RunUpdate(parentState, parametersEnumerator);
         if (state.onUpdateLength != 0)
         {
-            int index = state.onUpdateStart;
-            int to = index + state.onUpdateLength;
-            StateEventUnion[] stateEvents = flyweight.StateEvents;
             TRecipient recipient = this.recipient;
-            for (; index < to; index++)
-                stateEvents[index].Invoke(recipient, parametersEnumerator);
+#if NET5_0_OR_GREATER
+            ref StateEventUnion current = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(flyweight.StateEvents), state.onUpdateStart);
+#else
+            ref StateEventUnion current = ref flyweight.StateEvents[state.onUpdateStart];
+#endif
+            ref StateEventUnion end = ref Unsafe.Add(ref current, state.onUpdateLength);
+            while (Unsafe.IsAddressLessThan(ref current, ref end))
+            {
+                current.Invoke(recipient, parametersEnumerator);
+                current = ref Unsafe.Add(ref current, 1);
+            }
         }
     }
 

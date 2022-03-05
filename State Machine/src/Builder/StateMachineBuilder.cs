@@ -148,32 +148,38 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
 
         Debug.Assert(transitionStartIndexes.Count == transitionsCount);
 
-        int initialStateOnEntryStart = iStateEvents;
-        switch (initialStateExecutionPolicy)
+        int initialStateOnEntryStart;
+        if (iStateEvents == stateEventsCount)
+            initialStateOnEntryStart = -1;
+        else
         {
-            case InitializationPolicy.ChildFirst:
-                StateBuilder<TState, TEvent, TRecipient> stateBuilder = this.states[initialState];
-                while (true)
-                {
-                    stateBuilder.CopyOnEntryTo(stateEvents, ref iStateEvents);
-                    if (!stateBuilder.IsSubState(out TState? state))
-                        break;
-                    stateBuilder = this.states[state];
-                }
-                break;
-            case InitializationPolicy.ParentFirst:
-                Traverse(this.states[initialState], ref iStateEvents);
+            initialStateOnEntryStart = iStateEvents;
+            switch (initialStateExecutionPolicy)
+            {
+                case InitializationPolicy.ChildFirst:
+                    StateBuilder<TState, TEvent, TRecipient> stateBuilder = this.states[initialState];
+                    while (true)
+                    {
+                        stateBuilder.CopyOnEntryTo(stateEvents, ref iStateEvents);
+                        if (!stateBuilder.IsSubState(out TState? state))
+                            break;
+                        stateBuilder = this.states[state];
+                    }
+                    break;
+                case InitializationPolicy.ParentFirst:
+                    Traverse(this.states[initialState], ref iStateEvents);
 
-                void Traverse(StateBuilder<TState, TEvent, TRecipient> stateBuilder, ref int iStateEvents)
-                {
-                    if (stateBuilder.IsSubState(out TState? state))
-                        Traverse(this.states[state], ref iStateEvents);
-                    stateBuilder.CopyOnEntryTo(stateEvents, ref iStateEvents);
-                }
-                break;
-            case InitializationPolicy.Current:
-                this.states[initialState].CopyOnEntryTo(stateEvents, ref iStateEvents);
-                break;
+                    void Traverse(StateBuilder<TState, TEvent, TRecipient> stateBuilder, ref int iStateEvents)
+                    {
+                        if (stateBuilder.IsSubState(out TState? state))
+                            Traverse(this.states[state], ref iStateEvents);
+                        stateBuilder.CopyOnEntryTo(stateEvents, ref iStateEvents);
+                    }
+                    break;
+                case InitializationPolicy.Current:
+                    this.states[initialState].CopyOnEntryTo(stateEvents, ref iStateEvents);
+                    break;
+            }
         }
 
         return new StateMachineFactory<TState, TEvent, TRecipient>(states, stateEvents, transitionEvents, transitionStartIndexes, statesMap[initialState], initialStateOnEntryStart);

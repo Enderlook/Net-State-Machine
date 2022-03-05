@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Enderlook.StateMachine;
 
@@ -22,7 +23,15 @@ internal struct SlotsQueue<T>
     public T this[int index]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => queue[index].Value;
+        get
+        {
+#if NET5_0_OR_GREATER
+            Debug.Assert(queue.Length > index);
+            return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(queue), index).Value;
+#else
+            return queue[index].Value;
+#endif
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -64,12 +73,28 @@ internal struct SlotsQueue<T>
             first = -1;
         if (slot == last)
             last = -1;
+
 #if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
         if (!RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+        {
+#if NET5_0_OR_GREATER
+            Debug.Assert(queue.Length > slot);
+            Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(queue), slot).Next = firstUnused;
+#else
             queue[slot].Next = firstUnused;
+#endif
+        }
         else
 #endif
+        {
+#if NET5_0_OR_GREATER
+            Debug.Assert(queue.Length > slot);
+            Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(queue), slot) = (default!, firstUnused);
+#else
             queue[slot] = (default!, firstUnused);
+#endif
+        }
+
         firstUnused = slot;
     }
 
@@ -79,10 +104,16 @@ internal struct SlotsQueue<T>
         int previous;
         int current = start;
         int unused = firstUnused;
+#if NET5_0_OR_GREATER
+        ref (T Value, int Next) queue_ = ref MemoryMarshal.GetArrayDataReference(queue);
+#else
+        ref (T Value, int Next) queue_ = ref queue[0];
+#endif
         do
         {
             int next;
-            ref (T Value, int Next) slot = ref queue[current];
+            Debug.Assert(queue.Length > current);
+            ref (T Value, int Next) slot = ref Unsafe.Add(ref queue_, current);
             next = slot.Next;
             if (typeof(T) == typeof(ParameterSlot))
                 Unsafe.As<T, ParameterSlot>(ref slot.Value).Remove();
@@ -109,7 +140,14 @@ internal struct SlotsQueue<T>
     {
         int slot = firstUnused;
         if (slot != -1)
+        {
+#if NET5_0_OR_GREATER
+            Debug.Assert(queue.Length > slot);
+            firstUnused = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(queue), slot).Next;
+#else
             firstUnused = queue[slot].Next;
+#endif
+        }
         else
         {
             slot = firstDefault;
@@ -127,10 +165,22 @@ internal struct SlotsQueue<T>
             }
         }
 
+#if NET5_0_OR_GREATER
+        Debug.Assert(queue.Length > slot);
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(queue), slot) = (element, -1);
+#else
         queue[slot] = (element, -1);
+#endif
         int last_ = last;
         if (connectToPrevious && last_ != -1)
+        {
+#if NET5_0_OR_GREATER
+            Debug.Assert(queue.Length > last_);
+            Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(queue), last_).Next = slot;
+#else
             queue[last_].Next = slot;
+#endif
+        }
         last = slot;
         if (first == -1)
             first = slot;
@@ -152,7 +202,12 @@ internal struct SlotsQueue<T>
             return false;
         }
 
+#if NET5_0_OR_GREATER
+        Debug.Assert(queue.Length > old);
+        ref (T Value, int Next) slot = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(queue), old);
+#else
         ref (T Value, int Next) slot = ref queue[old];
+#endif
         element = slot.Value!;
         int next = first = slot.Next;
         if (next == -1)

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Enderlook.StateMachine;
 
@@ -71,6 +72,17 @@ public readonly struct ReadOnlySlice<T> : IReadOnlyList<T>
         if (length == 1)
             return default;
         return new ReadOnlySlice<T>(array, start + 1, length - 1);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal ref T GetUnsafe(int index)
+    {
+        Debug.Assert(index >= 0 && index <= length);
+#if NET5_0_OR_GREATER
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(array), start + index);
+#else
+        return ref array[start + index];
+#endif
     }
 
     /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
