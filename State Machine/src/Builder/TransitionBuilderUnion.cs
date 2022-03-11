@@ -65,7 +65,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                         break;
 
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder = transitionBuilder.StateBuilder;
-                    while (CheckRepetition(states, stateBuilder, gotoState))
+                    while (CheckRepetition(states, stateBuilder, states[gotoState]))
                     {
                         transitions += stateBuilder.OnExitCount;
                         if (!stateBuilder.IsSubState(out TState? state))
@@ -87,7 +87,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder = transitionBuilder.StateBuilder;
                     while (true)
                     {
-                        if (!CheckRepetition(states, stateBuilder, gotoState))
+                        if (!CheckRepetition(states, stateBuilder, states[gotoState]))
                         {
                             transitions += stateBuilder.OnExitCount;
                             goto exit;
@@ -135,8 +135,9 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                         // If true, this is a GotoSelf, which means the operation below would yield 0.
                         break;
 
+                    StateBuilder<TState, TEvent, TRecipient> transitionStateBuilder = transitionBuilder.StateBuilder;
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder = states[gotoState];
-                    while (CheckRepetition(states, stateBuilder, gotoState))
+                    while (CheckRepetition(states, stateBuilder, transitionStateBuilder))
                     {
                         transitions += stateBuilder.OnEntryCount;
                         if (!stateBuilder.IsSubState(out TState? state))
@@ -155,10 +156,11 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                         break;
                     }
 
+                    StateBuilder<TState, TEvent, TRecipient> transitionStateBuilder = transitionBuilder.StateBuilder;
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder = states[gotoState];
                     while (true)
                     {
-                        if (!CheckRepetition(states, stateBuilder, gotoState))
+                        if (!CheckRepetition(states, stateBuilder, transitionStateBuilder))
                         {
                             transitions += stateBuilder.OnEntryCount;
                             goto exit;
@@ -230,7 +232,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                         break;
 
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder = currentStateBuilder;
-                    while (CheckRepetition(states, stateBuilder, gotoState))
+                    while (CheckRepetition(states, stateBuilder, states[gotoState]))
                     {
                         StoreInTransitionEvents(stateBuilder.GetOnExitEnumerator(), ref i);
                         if (!stateBuilder.IsSubState(out TState? state))
@@ -250,7 +252,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
 
                     void Traverse(StateBuilder<TState, TEvent, TRecipient> stateBuilder, ref int i)
                     {
-                        if (!CheckRepetition(states, stateBuilder, gotoState))
+                        if (!CheckRepetition(states, stateBuilder, states[gotoState]))
                             return;
 
                         if (stateBuilder.IsSubState(out TState? state))
@@ -270,7 +272,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder = currentStateBuilder;
                     while (true)
                     {
-                        if (!CheckRepetition(states, stateBuilder, gotoState))
+                        if (!CheckRepetition(states, stateBuilder, states[gotoState]))
                         {
                             StoreInTransitionEvents(stateBuilder.GetOnExitEnumerator(), ref i);
                             goto exit;
@@ -293,12 +295,13 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                         break;
                     }
 
+                    StateBuilder<TState, TEvent, TRecipient> gotoStateBuilder = states[gotoState];
                     Traverse(currentStateBuilder, ref i);
                     break;
 
                     void Traverse(StateBuilder<TState, TEvent, TRecipient> stateBuilder, ref int i)
                     {
-                        if (!CheckRepetition(states, stateBuilder, gotoState))
+                        if (!CheckRepetition(states, stateBuilder, gotoStateBuilder))
                         {
                             StoreInTransitionEvents(stateBuilder.GetOnExitEnumerator(), ref i);
                             return;
@@ -360,7 +363,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                         break;
 
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder = states[gotoState];
-                    while (CheckRepetition(states, stateBuilder, gotoState))
+                    while (CheckRepetition(states, stateBuilder, currentStateBuilder))
                     {
                         StoreInTransitionEvents(stateBuilder.GetOnEntryEnumerator(), ref i);
                         if (!stateBuilder.IsSubState(out TState? state))
@@ -380,7 +383,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
 
                     void Traverse(StateBuilder<TState, TEvent, TRecipient> stateBuilder, ref int i)
                     {
-                        if (!CheckRepetition(states, stateBuilder, gotoState))
+                        if (!CheckRepetition(states, stateBuilder, currentStateBuilder))
                             return;
 
                         if (stateBuilder.IsSubState(out TState? state))
@@ -400,7 +403,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder = states[gotoState];
                     while (true)
                     {
-                        if (!CheckRepetition(states, stateBuilder, gotoState))
+                        if (!CheckRepetition(states, stateBuilder, currentStateBuilder))
                         {
                             StoreInTransitionEvents(stateBuilder.GetOnEntryEnumerator(), ref i);
                             break;
@@ -427,7 +430,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
 
                     void Traverse(StateBuilder<TState, TEvent, TRecipient> stateBuilder, ref int i)
                     {
-                        if (!CheckRepetition(states, stateBuilder, gotoState))
+                        if (!CheckRepetition(states, stateBuilder, currentStateBuilder))
                         {
                             StoreInTransitionEvents(stateBuilder.GetOnEntryEnumerator(), ref i);
                             return;
@@ -478,16 +481,15 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CheckRepetition(Dictionary<TState, StateBuilder<TState, TEvent, TRecipient>> states, StateBuilder<TState, TEvent, TRecipient> stateBuilder, TState gotoState)
+    private static bool CheckRepetition(Dictionary<TState, StateBuilder<TState, TEvent, TRecipient>> states, StateBuilder<TState, TEvent, TRecipient> current, StateBuilder<TState, TEvent, TRecipient> traversable)
     {
-        StateBuilder<TState, TEvent, TRecipient> gotoStateBuilder = states[gotoState];
         while (true)
         {
-            if (gotoStateBuilder == stateBuilder)
+            if (traversable == current)
                 return false;
-            if (!gotoStateBuilder.IsSubState(out TState? gotoState_))
+            if (!traversable.IsSubState(out TState? nextState))
                 break;
-            gotoStateBuilder = states[gotoState_];
+            traversable = states[nextState];
         }
         return true;
     }
