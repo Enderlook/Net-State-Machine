@@ -126,7 +126,7 @@ public sealed class StateBuilder<TState, TEvent, TRecipient> : IStateMachineBuil
     {
         if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
-        (onExit ??= new()).Add(new(action, StateEventType.HasRecipient | StateEventType.HasParameter));
+        (onEntry ??= new()).Add(new(action, StateEventType.HasRecipient | StateEventType.HasParameter));
         return this;
     }
 
