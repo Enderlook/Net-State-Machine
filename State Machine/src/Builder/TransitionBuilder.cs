@@ -248,7 +248,7 @@ public sealed class TransitionBuilder<TState, TEvent, TRecipient, TParent> : ISt
 
     /// <summary>
     /// Determines that will have no transition to any state, so no on entry nor on exit event will be raised.<br/>
-    /// This is equivalent either <c>OnEntryPolicy(TransitionPolicy.Ignore).OnExitPolicy(TransitionPolicy.Ignore).GotoSelf()</c> and <c>OnEntryPolicy(TransitionPolicy.ChildFirstWithCulling).OnExitPolicy(TransitionPolicy.ParentFirstWithCulling).GotoSelf()</c> (in a state transition of <c>Self -> Self</c> both codes produces the same effect).
+    /// This is equivalent to either <c>OnEntryPolicy(TransitionPolicy.Ignore).OnExitPolicy(TransitionPolicy.Ignore).GotoSelf()</c> or <c>OnEntryPolicy(TransitionPolicy.ChildFirstWithCulling).OnExitPolicy(TransitionPolicy.ParentFirstWithCulling).GotoSelf()</c> (in a state transition of <c>Self -> Self</c> both codes produces the same effect).
     /// </summary>
     /// <returns>Creator of this instance.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.</exception>

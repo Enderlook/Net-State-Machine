@@ -10,7 +10,7 @@
     <Product>Enderlook.StateMachine</Product>
     <RepositoryUrl>https://github.com/Enderlook/Net-State-Machine</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
     <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
