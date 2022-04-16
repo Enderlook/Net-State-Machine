@@ -28,6 +28,9 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
         if (continuation is ITransitionBuilder<TState, TEvent, TRecipient> branchTo_)
             return branchTo_.GetTotalTransitionsAndEnsureHasTerminator(states);
 
+        Debug.Assert(continuation is IGoto<TState>);
+        Unsafe.As<IGoto<TState>>(continuation).Validate();
+
         return GetTotalTransitionsUsedInGoto(states, transitionBuilder);
     }
 
@@ -37,7 +40,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
         if (continuation is IGoto<TState> @goto)
         {
             {
-                if (@goto.State is TState state && !states.ContainsKey(state)) ThrowHelper.ThrowInvalidOperationException_TransitionGoesToANotRegisteredState();
+                if (@goto.TryGetState(out TState? state) && !states.ContainsKey(state)) ThrowHelper.ThrowInvalidOperationException_TransitionGoesToANotRegisteredState();
             }
 
             switch (@goto.OnExitPolicy)
@@ -60,7 +63,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 case TransitionPolicy.ChildFirstWithCulling:
                 case TransitionPolicy.ParentFirstWithCulling:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                         // If true, this is a GotoSelf, which means the operation below would yield 0.
                         break;
 
@@ -77,7 +80,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 case TransitionPolicy.ParentFirstWithCullingInclusive:
                 case TransitionPolicy.ChildFirstWithCullingInclusive:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                     {
                         // If true, this is GotoSelf, which means the operation below can be simplified to:
                         transitions += transitionBuilder.StateBuilder.OnExitCount;
@@ -114,7 +117,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 case TransitionPolicy.ParentFirst:
                 {
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder;
-                    if (@goto.State is TState gotoState)
+                    if (@goto.TryGetState(out TState? gotoState))
                         stateBuilder = states[gotoState];
                     else
                         stateBuilder = transitionBuilder.StateBuilder;
@@ -131,7 +134,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 case TransitionPolicy.ChildFirstWithCulling:
                 case TransitionPolicy.ParentFirstWithCulling:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                         // If true, this is a GotoSelf, which means the operation below would yield 0.
                         break;
 
@@ -149,7 +152,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 case TransitionPolicy.ParentFirstWithCullingInclusive:
                 case TransitionPolicy.ChildFirstWithCullingInclusive:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                     {
                         // If true, this is GotoSelf, which means the operation below can be simplified to:
                         transitions += transitionBuilder.StateBuilder.OnEntryCount;
@@ -190,11 +193,10 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
         {
             type_ = TransitionEventType.IsGoTo;
             {
-                TState? state = @goto.State;
-                if (state is null)
-                    index = currentStateIndex; // Is GotoSelf.
-                else
+                if (@goto.TryGetState(out TState? state))
                     index = statesMap[state];
+                else
+                    index = currentStateIndex; // Is GotoSelf.
             }
 
             switch (@goto.OnExitPolicy)
@@ -227,7 +229,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 }
                 case TransitionPolicy.ChildFirstWithCulling:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                         // If true, this is a GotoSelf, which means the operation below would not add any transition event.
                         break;
 
@@ -243,7 +245,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 }
                 case TransitionPolicy.ParentFirstWithCulling:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                         // If true, this is a GotoSelf, which means the operation below would not add any transition event.
                         break;
 
@@ -262,7 +264,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 }
                 case TransitionPolicy.ChildFirstWithCullingInclusive:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                     {
                         // If true, this is GotoSelf, which means the operation below can be simplified to:
                         StoreInTransitionEvents(currentStateBuilder.GetOnExitEnumerator(), ref i);
@@ -288,7 +290,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 }
                 case TransitionPolicy.ParentFirstWithCullingInclusive:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                     {
                         // If true, this is GotoSelf, which means the operation below can be simplified to:
                         StoreInTransitionEvents(currentStateBuilder.GetOnExitEnumerator(), ref i);
@@ -324,7 +326,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 case TransitionPolicy.ChildFirst:
                 {
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder;
-                    if (@goto.State is TState gotoState)
+                    if (@goto.TryGetState(out TState? gotoState))
                         stateBuilder = states[gotoState];
                     else
                         stateBuilder = currentStateBuilder;
@@ -341,7 +343,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 case TransitionPolicy.ParentFirst:
                 {
                     StateBuilder<TState, TEvent, TRecipient> stateBuilder;
-                    if (@goto.State is TState gotoState)
+                    if (@goto.TryGetState(out TState? gotoState))
                         stateBuilder = states[gotoState];
                     else
                         stateBuilder = currentStateBuilder;
@@ -358,7 +360,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 }
                 case TransitionPolicy.ChildFirstWithCulling:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                         // If true, this is a GotoSelf, which means the operation below would not add any.
                         break;
 
@@ -374,7 +376,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 }
                 case TransitionPolicy.ParentFirstWithCulling:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                         // If true, this is a GotoSelf, which means the operation below would not add any.
                         break;
 
@@ -393,7 +395,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 }
                 case TransitionPolicy.ChildFirstWithCullingInclusive:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                     {
                         // If true, this is GotoSelf, which means the operation below can be simplified to:
                         StoreInTransitionEvents(currentStateBuilder.GetOnEntryEnumerator(), ref i);
@@ -418,7 +420,7 @@ internal readonly struct TransitionBuilderUnion<TState, TEvent, TRecipient>
                 }
                 case TransitionPolicy.ParentFirstWithCullingInclusive:
                 {
-                    if (@goto.State is not TState gotoState)
+                    if (!@goto.TryGetState(out TState? gotoState))
                     {
                         // If true, this is GotoSelf, which means the operation below can be simplified to:
                         StoreInTransitionEvents(currentStateBuilder.GetOnEntryEnumerator(), ref i);

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.StateMachine;
@@ -22,8 +23,6 @@ public sealed class GotoBuilder<TState, TEvent, TRecipient, TParent> : IGoto<TSt
     private TState? state;
     private TransitionPolicy? onEntryPolicy;
     private TransitionPolicy? onExitPolicy;
-
-    TState? IGoto<TState>.State => state;
 
     TransitionPolicy IGoto<TState>.OnEntryPolicy => onEntryPolicy ?? TransitionPolicy.ParentFirstWithCulling;
 
@@ -87,5 +86,28 @@ public sealed class GotoBuilder<TState, TEvent, TRecipient, TParent> : IGoto<TSt
         if (hasState != 0) ThrowHelper.ThrowInvalidOperationException_AlreadyHasGoto();
         hasState = 2;
         return parent.Parent;
+    }
+
+    bool IGoto<TState>.TryGetState([NotNullWhen(true)] out TState? state)
+    {
+        Debug.Assert(hasState != 0);
+        if (hasState == 1)
+        {
+            state = this.state;
+            Debug.Assert(state is not null);
+            return true;
+        }
+#if NET5_0_OR_GREATER
+        Unsafe.SkipInit(out state);
+#else
+        state = default;
+#endif
+        return false;
+    }
+
+    void IGoto<TState>.Validate()
+    {
+        if (hasState == 0)
+            ThrowHelper.ThrowInvalidOperationException_DoesNotHaveRegisteredStateInGoto();
     }
 }

@@ -61,6 +61,9 @@ internal static class ThrowHelper
     public static void ThrowInvalidOperationException_DoesNotHaveInitialState()
         => throw new InvalidOperationException("The state machine builder doesn't have registered an initial state.");
 
+    public static void ThrowInvalidOperationException_DoesNotHaveRegisteredStateInGoto()
+        => throw new InvalidOperationException("The state machine builder has a goto transition which doesn't have registered any state to go.");
+
     public static void ThrowInvalidOperationException_DoesNotHaveRegisteredStates()
         => throw new InvalidOperationException("The state machine builder doesn't have registered any state.");
 

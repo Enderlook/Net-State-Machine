@@ -259,6 +259,7 @@ public sealed class TransitionBuilder<TState, TEvent, TRecipient, TParent> : ISt
         GotoBuilder<TState, TEvent, TRecipient, TParent> builder = new(this);
         builder.OnEntryPolicy(TransitionPolicy.Ignore).OnExitPolicy(TransitionPolicy.Ignore);
         actions.Add(new(null, default, builder));
+        builder.GotoSelf();
         return Parent;
     }
 

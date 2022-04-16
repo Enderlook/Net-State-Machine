@@ -1,10 +1,14 @@
-﻿namespace Enderlook.StateMachine;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Enderlook.StateMachine;
 
 internal interface IGoto<TState>
 {
-    TState? State { get; }
+    bool TryGetState([NotNullWhen(true)] out TState? state);
 
     TransitionPolicy OnEntryPolicy { get; }
 
     TransitionPolicy OnExitPolicy { get; }
+
+    void Validate();
 }
