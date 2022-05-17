@@ -4,7 +4,7 @@
 
 An state machine builder library for .NET.
 
-The following example show all the functions of the state machine (except overloads which are described bellow):
+The following example some the functions of the state machine.
 
 ```cs
 using Enderlook.StateMachine;
@@ -63,6 +63,8 @@ public class Character
         stateMachine = GetStateMachineFactory().Create(this);
      // Alternatively if you want to pass parameters to the initialization of the state machine you can do:
      // stateMachine = GetStateMachineFactory().With(parameter).Create(this).
+	 // The method `.With(parameter)` can be concatenated as many times you need.
+	 // The pattern `stateMachine.With(p1).With(p2)...With(pn).SomeMethod(...)` is also valid for methods `Fire()`, `FireImmediately()` and `Update()`.
     }
 
     private static StateMachineFactory<States, Events, Character> GetStateMachineFactory()
@@ -175,6 +177,8 @@ public class Character
         {
             food = 100;
             stateMachine.Fire(Events.IsNoLongerHungry);
+         // Alternatively if you want to pass parameters to the initialization of the state machine you can do:
+		 // stateMachine.With(paramter).Fire(Events.IsNoLongerHungry);
         }
 
         health -= (int)MathF.Round(rnd.Next(6) * (1 - luck));
@@ -230,23 +234,6 @@ public class Character
     }
 }
 ```
-
-The following methods have overloads:
-
-`Fire(TEvent)` and `Fire(TEvent, TParameter)`. The method accept an optional parameter `TParameter` which is send to every delegate. If `TParameter` is missing, `default` is used.
-
-`ExecuteOnEntry(Action)`, `ExecuteOnExit(Action)`, `ExecuteOnUpdate(Action)` and `Execute(Action)` has an additional overload: `ExecuteOnEntry(Action<TParameter>)`, `ExecuteOnExit(Action<TParameter>)`, `ExecuteOnUpdate(Action<TParameter>)` and `Execute(Action<TParameter>)`, where `TParameter` parameter is the value passed on `.Fire(TEvent, TParameter)`.
-
-The parameter `TParameter` is optional, and can be ignored.
-For example:
- - If you use `Fire(TEvent)` and `Execute(Action<TParameter>)`, `TParameter` is replaced by `default`.
- - If you use `Fire(TEvent, TParameter)` but `Execute(Action)`, `TParameter` is ignored.
-
-`If(Func<bool>)` also have `If(Func<TParameter, bool)`.
-
-`Start()` also have `Start(TParameter)`, where `TParameter` is used in `ExecuteOnEntry(Action<TParameter>)` of the initial state.
-
-We added the generic parameter `TParameter` instead of using a simple `Object` type so you can specify custom constraints on it. Also this allows you to remove boxing when passing structs.
 
 # API
 
