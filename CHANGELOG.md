@@ -1,5 +1,8 @@
 # Changelog
 
+##
+- Add support for .NET 7.
+
 ## 0.4.0
 - Add support to customize transition policies.
 - Modify following APIs:
