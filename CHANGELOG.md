@@ -201,6 +201,21 @@ public sealed partial class TransitionBuilder<TState, TEvent, TRecipient, TParen
 +    public StateMachine<TState, TEvent, TRecipient> CreateWithParameter<TParameter>(TRecipient recipient, TParameter parameter);
 +    public StateMachine<TState, TEvent, TRecipient>.CreateParametersBuilder CreateWithParameters(TRecipient recipient);
 + }
+
++ public readonly struct ReadOnlySlice<T> : IReadOnlyList<T>
++ {
++     public T this[int index] { get; }
++     public int Count { get; }
++     public ReadOnlyMemory<T> Memory { get; }
++     public ReadOnlySpan<T> Span { get; }
++     public Enumerator GetEnumerator();
++     public struct Enumerator : IEnumerator<T>
++     {
++         public T Current { get; }
++         public bool MoveNext();
++         public void Reset();
++     }
++ }
 ```
 
 ## 0.2.1

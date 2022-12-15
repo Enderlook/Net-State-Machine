@@ -491,4 +491,36 @@ public enum TransitionPolicy
     /// Determines that subscribed delegates on children are run first until reach (including) the last common parent between the two states.
     ChildFirstWithCullingInclusive = 6,
 }
+
+/// Represent an slice of data.
+public readonly struct ReadOnlySlice<T> : IReadOnlyList<T>
+{
+    /// Get the element specified at the index.
+    public T this[int index] { get; }
+
+    /// Get the count of the slice.
+    public int Count { get; }
+
+    /// Get an <see cref="ReadOnlyMemory{T}"/> of this slice.
+    public ReadOnlyMemory<T> Memory { get; }
+
+    /// Get an <see cref="ReadOnlySpan{T}"/> of this slice.
+    public ReadOnlySpan<T> Span { get; }
+
+    /// Get the enumerator of the slice.
+    public Enumerator GetEnumerator();
+
+    /// Enumerator of <see cref="ReadOnlySlice{T}"/>.
+    public struct Enumerator : IEnumerator<T>
+    {
+        /// Get current element of the enumerator.
+        public T Current { get; }
+
+        /// Moves to the next element of the enumeration.
+        public bool MoveNext();
+
+        /// Reset the enumeration.
+        public void Reset();
+    }
+}
 ```
