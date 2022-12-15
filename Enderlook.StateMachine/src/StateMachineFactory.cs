@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Enderlook.StateMachine;
@@ -107,7 +108,14 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
     internal ReadOnlySlice<TState> GetHierarchyOfState(int state)
     {
         if (statesWithParents is ReadOnlySlice<TState>[] slices)
+        {
+#if NET6_0_OR_GREATER
+            Debug.Assert(slices.Length > state);
+            return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(slices), state);
+#else
             return slices[state];
+#endif
+        }
 
         return Slow();
 
@@ -161,7 +169,14 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
     internal ReadOnlySlice<TEvent> GetAcceptedEventsByState(int state)
     {
         if (eventsSupportedByStateIndex is ReadOnlySlice<TEvent>[] eventsSupportedByStateIndex_)
+        {
+#if NET6_0_OR_GREATER
+            Debug.Assert(eventsSupportedByStateIndex_.Length > state);
+            return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(eventsSupportedByStateIndex_), state);
+#else
             return eventsSupportedByStateIndex_[state];
+#endif
+        }
 
         return Slow();
 
