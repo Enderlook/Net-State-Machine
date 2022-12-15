@@ -26,7 +26,7 @@ public enum TransitionPolicy
     ChildFirst = 2,
 
     /// <summary>
-    /// Determines that subscribed delegates on parents are run first from (exluding) the last common parent between the two states.<br/>
+    /// Determines that subscribed delegates on parents are run first from (excluding) the last common parent between the two states.<br/>
     /// For example:<br/>
     /// If <c>ParentOf(ParentOf(n)) == ParentOf(ParentOf(m))</c>:<br/>
     /// <c>ParentOf(n) -> n</c>.<br/>

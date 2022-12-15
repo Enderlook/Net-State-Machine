@@ -3,6 +3,7 @@
 ##
 - Add support for .NET 7.
 - Improve perfomance of `CurrentStateHierarchy` and `CurrentAcceptedEvents` properties in `StateMachine<TState, TEvent, TRecipient>` in .NET >= 5.
+- Fix documentation typo.
 
 ## 0.4.0
 - Add support to customize transition policies.

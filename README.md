@@ -479,7 +479,7 @@ public enum TransitionPolicy
     /// Determines that subscribed delegates on children are run first.
     ChildFirst = 2,
 
-    /// Determines that subscribed delegates on parents are run first from (exluding) the last common parent between the two states.
+    /// Determines that subscribed delegates on parents are run first from (excluding) the last common parent between the two states.
     ParentFirstWithCulling = 3,
 
     /// Determines that subscribed delegates on children are run first until reach (excluding) the last common parent between the two states.
