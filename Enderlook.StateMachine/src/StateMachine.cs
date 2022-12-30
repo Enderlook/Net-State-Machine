@@ -22,6 +22,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     private readonly StateMachineFactory<TState, TEvent, TRecipient> flyweight;
 
     private TRecipient recipient;
+    private object?[]? stateRecipients;
 
     private int currentState;
 
@@ -38,6 +39,16 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         this.flyweight = flyweight;
         this.recipient = recipient;
         currentState = flyweight.InitialState;
+        if (flyweight.StateRecipients > 0)
+        {
+            stateRecipients = new object[flyweight.StateRecipients];
+            for (int i = 0; i < flyweight.States.Length; i++)
+            {
+                State<TState> state = flyweight.States[i];
+                if (state.stateRecipientIndex != -1)
+                    stateRecipients[i] = state.CreateStateRecipient(recipient);
+            }
+        }
     }
 
     internal StateMachine(StateMachineFactory<TState, TEvent, TRecipient> flyweight)
@@ -53,10 +64,20 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         int initialStateOnEntryStart = flyweight.InitialStateOnEntryStart;
         if (initialStateOnEntryStart != -1)
         {
+            State<TState> state = flyweight.States[flyweight.InitialState];
+            object? stateRecipient;
+            if (state.stateRecipientIndex != -1)
+            {
+                Debug.Assert(stateMachine.stateRecipients is not null);
+                stateRecipient = stateMachine.stateRecipients[state.stateRecipientIndex];
+            }
+            else
+                stateRecipient = null;
+
             Debug.Assert(flyweight.StateEvents.Length > initialStateOnEntryStart);
             StateEventUnion[] stateEvents = flyweight.StateEvents;
             for (int i = initialStateOnEntryStart; i < stateEvents.Length; i++)
-                stateEvents[i].Invoke(recipient, default);
+                stateEvents[i].Invoke(recipient, stateRecipient, state.stateRecipientType, state.stateHelper, default);
         }
         return stateMachine;
     }
@@ -388,22 +409,57 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RunUpdate(int stateIndex, SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
     {
+#if NET5_0_OR_GREATER
+        ref State<TState> state = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(flyweight.States), stateIndex);
+#else
         State<TState> state = flyweight.States[stateIndex];
+#endif
         if (state.TryGetParentState(out int parentState))
             RunUpdate(parentState, parametersEnumerator);
         if (state.onUpdateLength != 0)
         {
             TRecipient recipient = this.recipient;
-#if NET5_0_OR_GREATER
-            ref StateEventUnion current = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(flyweight.StateEvents), state.onUpdateStart);
-#else
-            ref StateEventUnion current = ref flyweight.StateEvents[state.onUpdateStart];
-#endif
-            ref StateEventUnion end = ref Unsafe.Add(ref current, state.onUpdateLength);
-            while (Unsafe.IsAddressLessThan(ref current, ref end))
+
+            object? stateRecipient;
+
+            // Improves constant propagation inside loop.
+            switch (state.stateRecipientType)
             {
-                current.Invoke(recipient, parametersEnumerator);
-                current = ref Unsafe.Add(ref current, 1);
+                case StateRecipientType.Unused:
+                    Debug.Assert(state.stateRecipientIndex == -1);
+                    stateRecipient = null;
+                    Loop(StateRecipientType.Unused);
+                    break;
+                case StateRecipientType.ValueType:
+                    Debug.Assert(state.stateRecipientIndex != -1);
+                    Debug.Assert(stateRecipients is not null);
+                    stateRecipient = stateRecipients[flyweight.InitialState];
+                    Loop(StateRecipientType.ValueType);
+                    break;
+                case StateRecipientType.ReferenceType:
+                    Debug.Assert(state.stateRecipientIndex != -1);
+                    Debug.Assert(stateRecipients is not null);
+                    stateRecipient = stateRecipients[flyweight.InitialState];
+                    Loop(StateRecipientType.ReferenceType);
+                    break;
+            }
+
+            StateEventUnion Loop(StateRecipientType stateRecipientType)
+            {
+#if NET5_0_OR_GREATER
+                ref StateEventUnion current = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(flyweight.StateEvents), state.onUpdateStart);
+#else
+                ref StateEventUnion current = ref flyweight.StateEvents[state.onUpdateStart];
+#endif
+                ref StateEventUnion end = ref Unsafe.Add(ref current, state.onUpdateLength);
+
+                while (Unsafe.IsAddressLessThan(ref current, ref end))
+                {
+                    current.Invoke(recipient, stateRecipient, stateRecipientType, state.stateHelper, parametersEnumerator);
+                    current = ref Unsafe.Add(ref current, 1);
+                }
+
+                return current;
             }
         }
     }
@@ -455,8 +511,18 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
         parameterBuilderFirstIndex = -1;
         SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator = parameterIndexes.GetEnumeratorStartingAt(index);
         StateEventUnion[] stateEvents = flyweight.StateEvents;
+        State<TState> state = flyweight.States[flyweight.InitialState];
+        object? stateRecipient;
+        if (state.stateRecipientIndex != -1)
+        {
+            Debug.Assert(stateRecipients is not null);
+            stateRecipient = stateRecipients[state.stateRecipientIndex];
+        }
+        else
+            stateRecipient = null;
+
         for (int i = flyweight.InitialStateOnEntryStart; i < stateEvents.Length; i++)
-            stateEvents[i].Invoke(recipient, parametersEnumerator);
+            stateEvents[i].Invoke(recipient, stateRecipient, state.stateRecipientType, state.stateHelper, parametersEnumerator);
         parameterIndexes.RemoveFrom(index);
     }
 }

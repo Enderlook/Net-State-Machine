@@ -16,16 +16,19 @@ internal readonly struct ParameterSlot
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryRun(Delegate @delegate) => container.TryRun(slot, @delegate);
+    public bool TryRun(Delegate action) => container.TryRun(slot, action);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryRun<TRecipient>(Delegate @delegate, TRecipient recipient) => container.TryRun(slot, @delegate, recipient);
+    public bool TryRun<T>(Delegate action, T arg) => container.TryRun(slot, action, arg);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryRun(Delegate @delegate, out bool isTrue) => container.TryRun(slot, @delegate, out isTrue);
+    public bool TryRun<T, U>(Delegate action, T arg1, U arg2) => container.TryRun(slot, action, arg1, arg2);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryRun<TRecipient>(Delegate @delegate, TRecipient recipient, out bool isTrue) => container.TryRun(slot, @delegate, recipient, out isTrue);
+    public bool TryRun(Delegate func, out bool isTrue) => container.TryRun(slot, func, out isTrue);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryRun<T>(Delegate func, T arg, out bool isTrue) => container.TryRun(slot, func, arg, out isTrue);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Remove() => container.Remove(slot);

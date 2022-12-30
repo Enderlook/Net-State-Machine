@@ -15,6 +15,11 @@ public sealed class StateBuilder<TState, TEvent, TRecipient, TStateRecipient> : 
 {
     private Delegate? stateRecipientFactory;
 
+    internal (StateHelper StateHelper, StateRecipientType StateRecipientType) StateRecipient
+        => (StateHelper<TStateRecipient>.Singlenton, typeof(TStateRecipient).IsValueType ? StateRecipientType.ValueType : StateRecipientType.ReferenceType);
+
+    internal Delegate? StateRecipientFactory => stateRecipientFactory;
+
     internal StateBuilder(StateMachineBuilder<TState, TEvent, TRecipient> parent, TState state, Func<TRecipient, TStateRecipient> factory) : base(parent, state)
     {
         stateRecipientFactory = factory;

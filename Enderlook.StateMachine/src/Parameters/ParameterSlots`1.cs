@@ -15,31 +15,31 @@ internal sealed class ParameterSlots<TParameter> : ParameterSlots
 
     public override void Remove(int slot) => queue.Remove(slot);
 
-    public override bool TryRun(int slot, Delegate @delegate)
+    public override bool TryRun(int slot, Delegate action)
     {
-        if (@delegate is Action<TParameter> action)
+        if (action is Action<TParameter> action_)
         {
-            action(queue[slot]);
+            action_(queue[slot]);
             return true;
         }
         return false;
     }
 
-    public override bool TryRun<TRecipient>(int slot, Delegate @delegate, TRecipient recipient)
+    public override bool TryRun<TRecipient>(int slot, Delegate action, TRecipient recipient)
     {
-        if (@delegate is Action<TRecipient, TParameter> action)
+        if (action is Action<TRecipient, TParameter> action_)
         {
-            action(recipient, queue[slot]);
+            action_(recipient, queue[slot]);
             return true;
         }
         return false;
     }
 
-    public override bool TryRun(int slot, Delegate @delegate, out bool isTrue)
+    public override bool TryRun(int slot, Delegate func, out bool isTrue)
     {
-        if (@delegate is Func<TParameter, bool> func)
+        if (func is Func<TParameter, bool> func_)
         {
-            isTrue = func(queue[slot]);
+            isTrue = func_(queue[slot]);
             return true;
         }
 #if NET5_0_OR_GREATER
@@ -50,11 +50,11 @@ internal sealed class ParameterSlots<TParameter> : ParameterSlots
         return false;
     }
 
-    public override bool TryRun<TRecipient>(int slot, Delegate @delegate, TRecipient recipient, out bool isTrue)
+    public override bool TryRun<TRecipient>(int slot, Delegate func, TRecipient recipient, out bool isTrue)
     {
-        if (@delegate is Func<TRecipient, TParameter, bool> func)
+        if (func is Func<TRecipient, TParameter, bool> func_)
         {
-            isTrue = func(recipient, queue[slot]);
+            isTrue = func_(recipient, queue[slot]);
             return true;
         }
 #if NET5_0_OR_GREATER

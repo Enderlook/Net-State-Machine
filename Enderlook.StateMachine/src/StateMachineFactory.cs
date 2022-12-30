@@ -24,6 +24,7 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
     internal readonly int InitialState;
     // -1 if doesn't have.
     internal readonly int InitialStateOnEntryStart;
+    internal readonly int StateRecipients;
 
     // This values are rarely used so we lazy initialize them.
     // Some of this values could be removed by using an additional indirection (using a Dictionary<TState, int>).
