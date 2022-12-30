@@ -47,8 +47,8 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
     /// </summary>
     /// <param name="state">State to add.</param>
     /// <returns>State builder.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
-    /// Thrown when <paramref name="state"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="state"/> is <see langword="null"/>.</exception>
     public StateBuilder<TState, TEvent, TRecipient> In(TState state)
     {
         if (HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
