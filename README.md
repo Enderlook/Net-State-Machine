@@ -4,7 +4,7 @@
 
 An state machine builder library for .NET.
 
-The following example some the functions of the state machine.
+The following example shows some the functions of the state machine.
 
 ```cs
 using Enderlook.StateMachine;
