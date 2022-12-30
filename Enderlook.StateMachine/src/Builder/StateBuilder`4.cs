@@ -146,11 +146,11 @@ public sealed class StateBuilder<TState, TEvent, TRecipient, TStateRecipient> : 
     }
 
     /// <summary>
-    /// Give access to delegates that uses a parameter.
+    /// Give access to delegates that uses a parameter and the state recipient.
     /// </summary>
     /// <typeparam name="TParameter">Type of parameter passed to the action when a trigger is fired.</typeparam>
     /// <returns>A wrapper of this instance that allow access to delegates that uses a parameter.</returns>
-    public StateBuilderWithParameter<TState, TEvent, TRecipient, TStateRecipient, TParameter> WithParameter<TParameter>()
+    public StateBuilderWithParameter<TState, TEvent, TRecipient, TStateRecipient, TParameter> WithParameterAndStateRecipient<TParameter>()
     {
         if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         return new(this);
