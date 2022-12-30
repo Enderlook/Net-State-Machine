@@ -43,9 +43,9 @@ internal sealed class ParameterSlots<TParameter> : ParameterSlots
             return true;
         }
 #if NET5_0_OR_GREATER
-            Unsafe.SkipInit(out isTrue);
+        Unsafe.SkipInit(out isTrue);
 #else
-            isTrue = default;
+        isTrue = default;
 #endif
         return false;
     }
@@ -58,9 +58,9 @@ internal sealed class ParameterSlots<TParameter> : ParameterSlots
             return true;
         }
 #if NET5_0_OR_GREATER
-            Unsafe.SkipInit(out isTrue);
+        Unsafe.SkipInit(out isTrue);
 #else
-            isTrue = default;
+        isTrue = default;
 #endif
         return false;
     }
