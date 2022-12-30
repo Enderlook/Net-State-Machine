@@ -5,6 +5,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+[assembly: InternalsVisibleTo("ConsoleApp2")]
+
 namespace Enderlook.StateMachine;
 
 /// <summary>

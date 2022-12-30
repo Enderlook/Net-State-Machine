@@ -23,6 +23,10 @@ internal static class ThrowHelper
         => throw new ArgumentNullException("event");
 
     [DoesNotReturn]
+    public static void ThrowArgumentNullException_Factory()
+        => throw new ArgumentNullException("factory");
+
+    [DoesNotReturn]
     public static void ThrowArgumentNullException_Parameters()
         => throw new ArgumentNullException("parameters");
 
@@ -71,6 +75,9 @@ internal static class ThrowHelper
         where TState : notnull
         where TEvent : notnull
         => throw new InvalidOperationException($"Not found a transition for event {@event} in current state {state}.");
+
+    public static void ThrowInvalidOperationException_StateWithStateARecipientAlreadyExist()
+        => throw new InvalidOperationException("The specified state already exists with an state recipient.");
 
     public static void ThrowInvalidOperationException_ParameterBuilderWasFinalized()
         => throw new InvalidOperationException("The associated parameters builder has already been finalized.");

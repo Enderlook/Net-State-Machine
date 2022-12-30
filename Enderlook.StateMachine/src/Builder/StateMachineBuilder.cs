@@ -62,6 +62,117 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
     }
 
     /// <summary>
+    /// Add a new state or loads a previously added state.<br/>
+    /// If the state was already created but didn't have an state recipient, it's added a new recipient.<br/>
+    /// States can only have one recipient.
+    /// </summary>
+    /// <typeparam name="TStateRecipient">Type of the recipient of the state to create.</typeparam>
+    /// <param name="state">State to add.</param>
+    /// <param name="factory">Factory that creates instances of the <typeparamref name="TStateRecipient"/>.</param>
+    /// <returns>State builder.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy, or if state already has an state recipient with an specified factory.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="state"/> or <paramref name="factory"/> are <see langword="null"/>.</exception>
+    public StateBuilder<TState, TEvent, TRecipient, TStateRecipient> In<TStateRecipient>(TState state, Func<TRecipient, TStateRecipient> factory)
+    {
+        if (HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
+        if (state is null) ThrowHelper.ThrowArgumentNullException_State();
+        if (factory is null) ThrowHelper.ThrowArgumentNullException_Factory();
+        StateBuilder<TState, TEvent, TRecipient, TStateRecipient> result;
+        if (!states.TryGetValue(state, out StateBuilder<TState, TEvent, TRecipient>? builder))
+        {
+            builder = result = new StateBuilder<TState, TEvent, TRecipient, TStateRecipient>(this, state, factory);
+            states.Add(state, builder);
+        }
+        else if (builder.GetType() == typeof(StateBuilder<TState, TEvent, TRecipient>))
+        {
+            result = new StateBuilder<TState, TEvent, TRecipient, TStateRecipient>(builder, factory);
+            states[state] = result;
+        }
+        else if (builder is StateBuilder<TState, TEvent, TRecipient, TStateRecipient> builder_ && builder_.TryInsertFactory(factory))
+            result = builder_;
+        else
+        {
+            ThrowHelper.ThrowInvalidOperationException_StateWithStateARecipientAlreadyExist();
+            result = default!;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Add a new state or loads a previously added state.<br/>
+    /// If the state was already created but didn't have an state recipient, it's added a new recipient.<br/>
+    /// States can only have one recipient.
+    /// </summary>
+    /// <typeparam name="TStateRecipient">Type of the recipient of the state to create.</typeparam>
+    /// <param name="state">State to add.</param>
+    /// <param name="factory">Factory that creates instances of the <typeparamref name="TStateRecipient"/>.</param>
+    /// <returns>State builder.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy, or if state already has an state recipient with an specified factory.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="state"/> or <paramref name="factory"/> are <see langword="null"/>.</exception>
+    public StateBuilder<TState, TEvent, TRecipient, TStateRecipient> In<TStateRecipient>(TState state, Func<TStateRecipient> factory)
+    {
+        if (HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
+        if (state is null) ThrowHelper.ThrowArgumentNullException_State();
+        if (factory is null) ThrowHelper.ThrowArgumentNullException_Factory();
+        StateBuilder<TState, TEvent, TRecipient, TStateRecipient> result;
+        if (!states.TryGetValue(state, out StateBuilder<TState, TEvent, TRecipient>? builder))
+        {
+            builder = result = new StateBuilder<TState, TEvent, TRecipient, TStateRecipient>(this, state, factory);
+            states.Add(state, builder);
+        }
+        else if (builder.GetType() == typeof(StateBuilder<TState, TEvent, TRecipient>))
+        {
+            result = new StateBuilder<TState, TEvent, TRecipient, TStateRecipient>(builder, factory);
+            states[state] = result;
+        }
+        else if (builder is StateBuilder<TState, TEvent, TRecipient, TStateRecipient> builder_ && builder_.TryInsertFactory(factory))
+            result = builder_;
+        else
+        {
+            ThrowHelper.ThrowInvalidOperationException_StateWithStateARecipientAlreadyExist();
+            result = default!;
+        }
+        return result;
+    }
+
+
+    /// <summary>
+    /// Add a new state or loads a previously added state.<br/>
+    /// If the state was already created but didn't have an state recipient, it's added a new recipient.<br/>
+    /// States can only have one recipient.<br/>
+    /// Since no factory for the recipient was provided <see cref="Activator.CreateInstance{T}"/> will be used, unless it's replaced by a call to another overload of this method which accepts a factory.
+    /// </summary>
+    /// <typeparam name="TStateRecipient">Type of the recipient of the state to create.</typeparam>
+    /// <param name="state">State to add.</param>
+    /// <returns>State builder.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy, or if state already has an state recipient.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="state"/> is <see langword="null"/>.</exception>
+    public StateBuilder<TState, TEvent, TRecipient, TStateRecipient> In<TStateRecipient>(TState state)
+    {
+        if (HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
+        if (state is null) ThrowHelper.ThrowArgumentNullException_State();
+        StateBuilder<TState, TEvent, TRecipient, TStateRecipient> result;
+        if (!states.TryGetValue(state, out StateBuilder<TState, TEvent, TRecipient>? builder))
+        {
+            builder = result = new StateBuilder<TState, TEvent, TRecipient, TStateRecipient>(this, state);
+            states.Add(state, builder);
+        }
+        else if (builder.GetType() == typeof(StateBuilder<TState, TEvent, TRecipient>))
+        {
+            result = new StateBuilder<TState, TEvent, TRecipient, TStateRecipient>(builder);
+            states[state] = result;
+        }
+        else if (builder is StateBuilder<TState, TEvent, TRecipient, TStateRecipient> builder_)
+            result = builder_;
+        else
+        {
+            ThrowHelper.ThrowInvalidOperationException_StateWithStateARecipientAlreadyExist();
+            result = default!;
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Creates a factory of the current state machine plan.
     /// </summary>
     /// <returns>Created factory.</returns>
