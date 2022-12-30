@@ -106,9 +106,9 @@ public class StateBuilder<TState, TEvent, TRecipient> : IStateMachineBuilderReac
     /// <returns><see langword="this"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
     /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-    public StateBuilder<TState, TEvent, TRecipient> OnEntry(Action<TRecipient> action)
+    public StateBuilder<TState, TEvent, TRecipient> OnEntryWithRecipient(Action<TRecipient> action)
     {
-        if (upgrade is not null) return upgrade.OnEntry(action);
+        if (upgrade is not null) return upgrade.OnEntryWithRecipient(action);
         if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
         (onEntry ??= new()).Add(new(action, StateEventType.HasRecipient));
@@ -139,9 +139,9 @@ public class StateBuilder<TState, TEvent, TRecipient> : IStateMachineBuilderReac
     /// <returns><see langword="this"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
     /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-    public StateBuilder<TState, TEvent, TRecipient> OnExit(Action<TRecipient> action)
+    public StateBuilder<TState, TEvent, TRecipient> OnExitWithRecipient(Action<TRecipient> action)
     {
-        if (upgrade is not null) return upgrade.OnExit(action);
+        if (upgrade is not null) return upgrade.OnExitWithRecipient(action);
         if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
         (onExit ??= new()).Add(new(action, StateEventType.HasRecipient));
@@ -171,9 +171,9 @@ public class StateBuilder<TState, TEvent, TRecipient> : IStateMachineBuilderReac
     /// <returns><see langword="this"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
     /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-    public StateBuilder<TState, TEvent, TRecipient> OnUpdate(Action<TRecipient> action)
+    public StateBuilder<TState, TEvent, TRecipient> OnUpdateWithRecipient(Action<TRecipient> action)
     {
-        if (upgrade is not null) return upgrade.OnUpdate(action);
+        if (upgrade is not null) return upgrade.OnUpdateWithRecipient(action);
         if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
         (onUpdate ??= new()).Add(new(action, StateEventType.HasRecipient));

@@ -69,4 +69,90 @@ public sealed class StateBuilder<TState, TEvent, TRecipient, TStateRecipient> : 
         (onEntry ??= new()).Add(new(action, StateEventType.HasStateRecipient));
         return this;
     }
+
+    /// <summary>
+    /// Determines an action to execute on entry to this state.
+    /// </summary>
+    /// <param name="action">Action to execute.</param>
+    /// <returns><see langword="this"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
+    /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
+    public StateBuilder<TState, TEvent, TRecipient> OnEntryWithRecipient(Action<TRecipient, TStateRecipient> action)
+    {
+        if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
+        if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
+        (onEntry ??= new()).Add(new(action, StateEventType.HasRecipient | StateEventType.HasStateRecipient));
+        return this;
+    }
+
+    /// <summary>
+    /// Determines an action to execute on exit to this state.
+    /// </summary>
+    /// <param name="action">Action to execute.</param>
+    /// <returns><see langword="this"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
+    /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
+    public StateBuilder<TState, TEvent, TRecipient> OnExit(Action<TStateRecipient> action)
+    {
+        if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
+        if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
+        (onExit ??= new()).Add(new(action, StateEventType.HasStateRecipient));
+        return this;
+    }
+
+    /// <summary>
+    /// Determines an action to execute on exit to this state.
+    /// </summary>
+    /// <param name="action">Action to execute.</param>
+    /// <returns><see langword="this"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
+    /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
+    public StateBuilder<TState, TEvent, TRecipient> OnExit(Action<TRecipient, TStateRecipient> action)
+    {
+        if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
+        if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
+        (onExit ??= new()).Add(new(action, StateEventType.HasRecipient | StateEventType.HasStateRecipient));
+        return this;
+    }
+
+    /// <summary>
+    /// Determines an action to execute on update while in this state.
+    /// </summary>
+    /// <param name="action">Action to execute.</param>
+    /// <returns><see langword="this"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
+    /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
+    public StateBuilder<TState, TEvent, TRecipient> OnUpdate(Action<TStateRecipient> action)
+    {
+        if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
+        if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
+        (onUpdate ??= new()).Add(new(action, StateEventType.HasStateRecipient));
+        return this;
+    }
+
+    /// <summary>
+    /// Determines an action to execute on update while in this state.
+    /// </summary>
+    /// <param name="action">Action to execute.</param>
+    /// <returns><see langword="this"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
+    /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
+    public StateBuilder<TState, TEvent, TRecipient> OnUpdate(Action<TRecipient, TStateRecipient> action)
+    {
+        if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
+        if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
+        (onUpdate ??= new()).Add(new(action, StateEventType.HasRecipient | StateEventType.HasStateRecipient));
+        return this;
+    }
+
+    /// <summary>
+    /// Give access to delegates that uses a parameter.
+    /// </summary>
+    /// <typeparam name="TParameter">Type of parameter passed to the action when a trigger is fired.</typeparam>
+    /// <returns>A wrapper of this instance that allow access to delegates that uses a parameter.</returns>
+    public StateBuilderWithParameter<TState, TEvent, TRecipient, TStateRecipient, TParameter> WithParameter<TParameter>()
+    {
+        if (parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
+        return new(this);
+    }
 }

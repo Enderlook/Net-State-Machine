@@ -42,9 +42,9 @@ public readonly struct StateBuilderWithParameter<TState, TEvent, TRecipient, TPa
     /// <returns><see langword="this"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
     /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-    public StateBuilder<TState, TEvent, TRecipient> OnEntry(Action<TRecipient, TParameter> action)
+    public StateBuilder<TState, TEvent, TRecipient> OnEntryWithRecipient(Action<TRecipient, TParameter> action)
     {
-        if (owner.Upgrade is not null) return owner.Upgrade.WithParameter<TParameter>().OnEntry(action);
+        if (owner.Upgrade is not null) return owner.Upgrade.WithParameter<TParameter>().OnEntryWithRecipient(action);
         if (owner.parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
         (owner.onEntry ??= new()).Add(new(action, StateEventType.HasRecipient | StateEventType.HasParameter));
@@ -76,9 +76,9 @@ public readonly struct StateBuilderWithParameter<TState, TEvent, TRecipient, TPa
     /// <returns><see langword="this"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
     /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-    public StateBuilder<TState, TEvent, TRecipient> OnExit(Action<TRecipient, TParameter> action)
+    public StateBuilder<TState, TEvent, TRecipient> OnExitWithRecipient(Action<TRecipient, TParameter> action)
     {
-        if (owner.Upgrade is not null) return owner.Upgrade.WithParameter<TParameter>().OnExit(action);
+        if (owner.Upgrade is not null) return owner.Upgrade.WithParameter<TParameter>().OnExitWithRecipient(action);
         if (owner.parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
         (owner.onExit ??= new()).Add(new(action, StateEventType.HasRecipient | StateEventType.HasParameter));
@@ -110,9 +110,9 @@ public readonly struct StateBuilderWithParameter<TState, TEvent, TRecipient, TPa
     /// <returns><see langword="this"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
     /// Thrown when <paramref name="action"/> is <see langword="null"/>.</exception>
-    public StateBuilder<TState, TEvent, TRecipient> OnUpdate(Action<TRecipient, TParameter> action)
+    public StateBuilder<TState, TEvent, TRecipient> OnUpdateWithRecipient(Action<TRecipient, TParameter> action)
     {
-        if (owner.Upgrade is not null) return owner.Upgrade.WithParameter<TParameter>().OnUpdate(action);
+        if (owner.Upgrade is not null) return owner.Upgrade.WithParameter<TParameter>().OnUpdateWithRecipient(action);
         if (owner.parent.HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
         if (action is null) ThrowHelper.ThrowArgumentNullException_Action();
         (owner.onUpdate ??= new()).Add(new(action, StateEventType.HasRecipient | StateEventType.HasParameter));
