@@ -207,7 +207,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     /// </summary>
     /// <param name="event">Event to fire.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="event"/> is <see langword="null"/>.</exception>
-    /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when a parameter builder associated with this state machine has not been finalized.</exception>
     public void Fire(TEvent @event)
     {
         if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
@@ -222,7 +222,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     /// </summary>
     /// <param name="event">Event to fire.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="event"/> is <see langword="null"/>.</exception>
-    /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when a parameter builder associated with this state machine has not been finalized.</exception>
     public void FireImmediately(TEvent @event)
     {
         if (@event is null) ThrowHelper.ThrowArgumentNullException_Event();
@@ -233,7 +233,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     /// <summary>
     /// Executes the update callbacks registered in the current state.
     /// </summary>
-    /// <exception cref="InvalidOperationException">Thrown a parameter builder associated with this state machine has not been finalized.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when a parameter builder associated with this state machine has not been finalized.</exception>
     public void Update()
     {
         if (parameterBuilderFirstIndex != -1) ThrowHelper.ThrowInvalidOperationException_AParameterBuilderHasNotBeenFinalized();

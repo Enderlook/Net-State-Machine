@@ -29,8 +29,8 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
     /// <param name="initializationPolicy">Determines the execution order of subscribed delegates in <see cref="StateBuilder{TState, TEvent, TRecipient}.OnEntry(Action)"/> (and overloads) in the initial state.</param>
     /// <returns><see langword="this"/>.</returns>
     /// <exception cref="InvalidOperationException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
-    /// Thrown when <paramref name="state"/> is <see langword="null"/>.<br/>
     /// Thrown when the initial state was already registered.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="state"/> is <see langword="null"/>.</exception>
     public StateMachineBuilder<TState, TEvent, TRecipient> SetInitialState(TState state, InitializationPolicy initializationPolicy = InitializationPolicy.ParentFirst)
     {
         if (HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
@@ -48,7 +48,8 @@ public sealed class StateMachineBuilder<TState, TEvent, TRecipient>
     /// <param name="state">State to add.</param>
     /// <returns>State builder.</returns>
     /// <exception cref="InvalidOperationException">Thrown when <see cref="StateMachineBuilder{TState, TEvent, TRecipient}.Finalize"/> or <see cref="StateBuilder{TState, TEvent, TRecipient}.Finalize"/> has already been called in this builder's hierarchy.<br/>
-    /// Thrown when <paramref name="state"/> is <see langword="null"/>.</exception>
+    /// Thrown when the initial state was already registered.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="state"/> is <see langword="null"/>.</exception>
     public StateBuilder<TState, TEvent, TRecipient> In(TState state)
     {
         if (HasFinalized) ThrowHelper.ThrowInvalidOperationException_AlreadyHasFinalized();
