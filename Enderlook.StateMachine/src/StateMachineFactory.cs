@@ -43,6 +43,11 @@ public sealed class StateMachineFactory<TState, TEvent, TRecipient>
         TransitionStartIndexes = transitionStartIndexes;
         InitialState = initialState;
         InitialStateOnEntryStart = initialStateOnEntryStart;
+
+        StateRecipients = 0;
+        for (int i = 0; i < states.Length; i++)
+            if (states[i].stateRecipientIndex != -1)
+                StateRecipients++;
     }
 
     /// <summary>

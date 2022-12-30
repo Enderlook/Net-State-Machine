@@ -22,7 +22,7 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     private readonly StateMachineFactory<TState, TEvent, TRecipient> flyweight;
 
     private TRecipient recipient;
-    private object?[]? stateRecipients;
+    private readonly object?[]? stateRecipients;
 
     private int currentState;
 
@@ -410,9 +410,10 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
     private void RunUpdate(int stateIndex, SlotsQueue<ParameterSlot>.Enumerator parametersEnumerator)
     {
 #if NET5_0_OR_GREATER
+        Debug.Assert(flyweight.States.Length < stateIndex);
         ref State<TState> state = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(flyweight.States), stateIndex);
 #else
-        State<TState> state = flyweight.States[stateIndex];
+        ref State<TState> state = ref flyweight.States[stateIndex];
 #endif
         if (state.TryGetParentState(out int parentState))
             RunUpdate(parentState, parametersEnumerator);
@@ -428,23 +429,23 @@ public sealed partial class StateMachine<TState, TEvent, TRecipient>
                 case StateRecipientType.Unused:
                     Debug.Assert(state.stateRecipientIndex == -1);
                     stateRecipient = null;
-                    Loop(StateRecipientType.Unused);
+                    Loop(StateRecipientType.Unused, ref state);
                     break;
                 case StateRecipientType.ValueType:
                     Debug.Assert(state.stateRecipientIndex != -1);
                     Debug.Assert(stateRecipients is not null);
                     stateRecipient = stateRecipients[flyweight.InitialState];
-                    Loop(StateRecipientType.ValueType);
+                    Loop(StateRecipientType.ValueType, ref state);
                     break;
                 case StateRecipientType.ReferenceType:
                     Debug.Assert(state.stateRecipientIndex != -1);
                     Debug.Assert(stateRecipients is not null);
                     stateRecipient = stateRecipients[flyweight.InitialState];
-                    Loop(StateRecipientType.ReferenceType);
+                    Loop(StateRecipientType.ReferenceType, ref state);
                     break;
             }
 
-            StateEventUnion Loop(StateRecipientType stateRecipientType)
+            StateEventUnion Loop(StateRecipientType stateRecipientType, ref State<TState> state)
             {
 #if NET5_0_OR_GREATER
                 ref StateEventUnion current = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(flyweight.StateEvents), state.onUpdateStart);

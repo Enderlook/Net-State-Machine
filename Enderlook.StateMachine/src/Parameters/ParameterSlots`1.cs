@@ -25,11 +25,21 @@ internal sealed class ParameterSlots<TParameter> : ParameterSlots
         return false;
     }
 
-    public override bool TryRun<TRecipient>(int slot, Delegate action, TRecipient recipient)
+    public override bool TryRun<T>(int slot, Delegate action, T arg)
     {
-        if (action is Action<TRecipient, TParameter> action_)
+        if (action is Action<T, TParameter> action_)
         {
-            action_(recipient, queue[slot]);
+            action_(arg, queue[slot]);
+            return true;
+        }
+        return false;
+    }
+
+    public override bool TryRun<T, U>(int slot, Delegate action, T arg1, U arg2)
+    {
+        if (action is Action<T, U, TParameter> action_)
+        {
+            action_(arg1, arg2, queue[slot]);
             return true;
         }
         return false;
@@ -50,11 +60,11 @@ internal sealed class ParameterSlots<TParameter> : ParameterSlots
         return false;
     }
 
-    public override bool TryRun<TRecipient>(int slot, Delegate func, TRecipient recipient, out bool isTrue)
+    public override bool TryRun<T>(int slot, Delegate func, T arg, out bool isTrue)
     {
-        if (func is Func<TRecipient, TParameter, bool> func_)
+        if (func is Func<T, TParameter, bool> func_)
         {
-            isTrue = func_(recipient, queue[slot]);
+            isTrue = func_(arg, queue[slot]);
             return true;
         }
 #if NET5_0_OR_GREATER

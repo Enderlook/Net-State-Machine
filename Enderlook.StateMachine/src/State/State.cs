@@ -10,7 +10,7 @@ internal readonly struct State<TState>
     private readonly int subStateOf; // -1 if is not a substate.
     public readonly int onUpdateStart;
     public readonly int onUpdateLength;
-    public readonly int stateRecipientIndex;
+    public readonly int stateRecipientIndex; // -1 if doesn't have.
     public readonly StateHelper? stateHelper;
     public readonly StateRecipientType stateRecipientType;
     private readonly Delegate? stateRecipientFactory;
